@@ -37,11 +37,12 @@ const putHandler = async (req: NextRequest, user: UserPayload, context: RouteCon
     try {
         const { id } = await context.params;
         const body = await req.json();
-        const { title, description } = body;
+        const { title, description, duration } = body;
 
         const updates: any = {};
         if (title) updates.title = title;
         if (description !== undefined) updates.description = description;
+        if (duration !== undefined) updates.duration = Math.round(parseFloat(duration) || 0);
 
         const { data: video, error } = await supabase
             .from('videos')

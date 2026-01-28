@@ -14,7 +14,7 @@ const handler = async (req: NextRequest, user: UserPayload) => {
             .from('sessions')
             .select(`
                 *,
-                video:videos!video_id(title, duration, thumbnail_url, video_url),
+                video:videos!video_id(title, duration, thumbnail_url, video_url, source, drive_file_id),
                 creator:users!created_by(name),
                 admin_messages(id, message, timestamp_offset, sender_name, sender_avatar, sent)
             `);

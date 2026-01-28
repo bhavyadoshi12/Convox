@@ -9,6 +9,7 @@ interface VideoData {
     video_url: string;
     thumbnail_url: string;
     duration: number;
+    source: 'supabase' | 'google_drive';
     uploadedBy: {
         id: string;
         name: string;
@@ -42,6 +43,7 @@ const VideoCard = ({ video, onDelete, onEdit, onPlay, formatDuration }: VideoCar
                         fill
                         className="object-cover transition-transform duration-500 group-hover:scale-105"
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                        unoptimized={video.source === 'google_drive'}
                     />
                 ) : (
                     <div className="flex h-full w-full items-center justify-center">
@@ -59,6 +61,11 @@ const VideoCard = ({ video, onDelete, onEdit, onPlay, formatDuration }: VideoCar
                 <span className="absolute bottom-2 right-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-medium text-white z-20">
                     {formatDuration(video.duration)}
                 </span>
+                {video.source === 'google_drive' && (
+                    <span className="absolute top-2 right-2 rounded bg-green-500/90 px-1.5 py-0.5 text-[10px] font-bold text-white z-20 uppercase">
+                        Drive
+                    </span>
+                )}
             </div>
 
             <div className="flex flex-1 flex-col p-4">

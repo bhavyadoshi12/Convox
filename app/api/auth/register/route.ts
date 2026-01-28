@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
                 email: email.toLowerCase(),
                 password_hash: passwordHash,
                 role: role || 'student',
-                avatar_url: 'https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg'
+                avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
             })
             .select()
             .single();

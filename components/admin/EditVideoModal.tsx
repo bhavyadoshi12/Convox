@@ -7,6 +7,7 @@ interface VideoData {
     id: string;
     title: string;
     description?: string;
+    duration: number;
 }
 
 interface EditVideoModalProps {
@@ -19,6 +20,7 @@ interface EditVideoModalProps {
 export default function EditVideoModal({ isOpen, onClose, onSuccess, video }: EditVideoModalProps) {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
+    const [duration, setDuration] = useState(0);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isSuccess, setIsSuccess] = useState(false);
@@ -27,6 +29,7 @@ export default function EditVideoModal({ isOpen, onClose, onSuccess, video }: Ed
         if (isOpen && video) {
             setTitle(video.title);
             setDescription(video.description || '');
+            setDuration(video.duration || 0);
             setError(null);
             setIsSuccess(false);
         }
@@ -48,7 +51,8 @@ export default function EditVideoModal({ isOpen, onClose, onSuccess, video }: Ed
                 },
                 body: JSON.stringify({
                     title,
-                    description
+                    description,
+                    duration
                 })
             });
 
@@ -121,11 +125,36 @@ export default function EditVideoModal({ isOpen, onClose, onSuccess, video }: Ed
                                     <label htmlFor="edit-desc" className="mb-1.5 block text-sm font-semibold text-gray-700">Description</label>
                                     <textarea
                                         id="edit-desc"
-                                        rows={4}
+                                        rows={3}
                                         className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-900 focus:border-[#2D8CFF] focus:outline-none focus:ring-1 focus:ring-[#2D8CFF] appearance-none"
                                         value={description}
                                         onChange={(e) => setDescription(e.target.value)}
                                     />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 rounded-xl bg-gray-50 p-4 border border-gray-100">
+                                    <div className="col-span-2 text-xs font-bold text-gray-500 uppercase mb-1">Video Duration (Required for Sync)</div>
+                                    <div>
+                                        <label className="mb-1.5 block text-xs font-semibold text-gray-600">Minutes</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            className="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-900 focus:border-[#2D8CFF] focus:outline-none"
+                                            value={Math.floor(duration / 60) || ''}
+                                            onChange={(e) => setDuration(prev => (prev % 60) + (parseInt(e.target.value) || 0) * 60)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="mb-1.5 block text-xs font-semibold text-gray-600">Seconds</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="59"
+                                            className="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-900 focus:border-[#2D8CFF] focus:outline-none"
+                                            value={duration % 60 || ''}
+                                            onChange={(e) => setDuration(prev => (Math.floor(prev / 60) * 60) + (parseInt(e.target.value) || 0))}
+                                        />
+                                    </div>
                                 </div>
                             </div>
 

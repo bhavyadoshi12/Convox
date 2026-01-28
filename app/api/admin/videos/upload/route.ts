@@ -2,14 +2,66 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { requireAuth } from '@/lib/middleware/authMiddleware';
 import { UserPayload } from '@/lib/auth';
+import { extractDriveFileId, generateDirectLink, generateThumbnailLink } from '@/lib/googleDrive';
 
 const MAX_FILE_SIZE = 2000 * 1024 * 1024; // 2GB
 const ALLOWED_FILE_TYPES = ['video/mp4', 'video/quicktime', 'video/x-msvideo']; // mp4, mov, avi
 
-
-
 const handler = async (req: NextRequest, user: UserPayload) => {
     try {
+        const contentType = req.headers.get('content-type') || '';
+
+        // Handle Google Drive Link (JSON payload)
+        if (contentType.includes('application/json')) {
+            const body = await req.json();
+            const { title, description, driveUrl, mode, duration } = body;
+
+            if (mode === 'google_drive') {
+                const fileId = extractDriveFileId(driveUrl);
+                if (!fileId) {
+                    return NextResponse.json(
+                        { success: false, message: 'Invalid Google Drive URL' },
+                        { status: 400 }
+                    );
+                }
+
+                console.log('Inserting GDrive Video:', { title, driveUrl, fileId, duration });
+                const { data: video, error: dbError } = await supabaseAdmin
+                    .from('videos')
+                    .insert({
+                        title,
+                        description,
+                        video_url: generateDirectLink(fileId),
+                        thumbnail_url: generateThumbnailLink(fileId),
+                        duration: duration || 0,
+                        uploader_id: user.id,
+                        source: 'google_drive',
+                        drive_file_id: fileId
+                    })
+                    .select()
+                    .single();
+
+                if (dbError) {
+                    console.error('GDrive DB Insert Error:', dbError);
+                    throw dbError;
+                }
+
+                return NextResponse.json(
+                    {
+                        success: true,
+                        video: {
+                            id: video.id,
+                            title: video.title,
+                            video_url: video.video_url,
+                            thumbnail_url: video.thumbnail_url,
+                        },
+                    },
+                    { status: 201 }
+                );
+            }
+        }
+
+        // Handle Supabase Upload (FormData)
         const formData = await req.formData();
         const title = formData.get('title') as string;
         const description = formData.get('description') as string;
@@ -85,6 +137,7 @@ const handler = async (req: NextRequest, user: UserPayload) => {
                 thumbnail_url: finalThumbnailUrl || '', // Fallback to empty if upload failed
                 duration: Math.round(parseFloat(durationStr) || 0),
                 uploader_id: user.id,
+                source: 'supabase'
             })
             .select()
             .single();

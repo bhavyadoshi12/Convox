@@ -27,7 +27,6 @@ interface StudentChatPanelProps {
 export default function StudentChatPanel({ sessionId, currentUserEmail, currentUserId, messages, loading = false }: StudentChatPanelProps) {
     const [inputValue, setInputValue] = useState('');
     const [sending, setSending] = useState(false);
-    const [participantCount, setParticipantCount] = useState(1);
     const scrollRef = useRef<HTMLDivElement>(null);
 
     // Auto-scroll to bottom
@@ -77,10 +76,6 @@ export default function StudentChatPanel({ sessionId, currentUserEmail, currentU
                     <MessageSquare className="h-4 w-4 text-[#2D8CFF]" />
                     Chat
                 </h3>
-                <div className="flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-bold text-gray-500">
-                    <Users className="h-3 w-3" />
-                    {participantCount} participants
-                </div>
             </div>
 
             <div
@@ -134,6 +129,6 @@ export default function StudentChatPanel({ sessionId, currentUserEmail, currentU
                     </button>
                 </form>
             </div>
-        </div>
+        </div >
     );
 }

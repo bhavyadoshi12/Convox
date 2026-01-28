@@ -32,6 +32,8 @@ interface SessionData {
         video_url: string;
         thumbnail_url: string;
         duration: number;
+        source?: 'supabase' | 'google_drive';
+        drive_file_id?: string;
     };
 }
 
@@ -258,6 +260,8 @@ export default function JoinSessionPage() {
                                 ref={playerRef}
                                 sessionId={session.sessionId || session.session_id}
                                 videoUrl={session.video_id?.video_url || ''}
+                                videoSource={session.video_id?.source}
+                                driveFileId={session.video_id?.drive_file_id}
                                 thumbnailUrl={session.video_id?.thumbnail_url}
                                 scheduledStart={session.scheduled_start}
                                 videoDuration={session.video_id?.duration || 0}
