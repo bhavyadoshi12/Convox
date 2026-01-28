@@ -24,7 +24,7 @@ interface VideoRef {
 }
 
 interface AdminMessage {
-    timestamp: number;
+    timestamp: number | string;
     message: string;
     id?: string; // Local ID for UI management
 }
@@ -113,7 +113,7 @@ function SessionForm({ sessionId, onSuccess }: SessionFormProps) {
     }, [selectedVideoId, videos]);
 
     const addMessage = useCallback(() => {
-        setAdminMessages(prev => [...prev, { timestamp: 0, message: '', id: Math.random().toString(36).substr(2, 9) }]);
+        setAdminMessages(prev => [...prev, { timestamp: '', message: '', id: Math.random().toString(36).substr(2, 9) }]);
     }, []);
 
     const removeMessage = useCallback((index: number) => {
@@ -148,15 +148,17 @@ function SessionForm({ sessionId, onSuccess }: SessionFormProps) {
 
         if (selectedVideo) {
             for (const msg of adminMessages) {
-                if (msg.timestamp < 0 || msg.timestamp > selectedVideo.duration) {
-                    setError(`Message timestamp (${msg.timestamp}s) must be within video duration (0-${selectedVideo.duration}s)`);
+                // Safely parse timestamp for validation
+                const ts = Number(msg.timestamp);
+                if (isNaN(ts) || ts < 0 || ts > selectedVideo.duration) {
+                    setError(`Invalid message timestamp: ${msg.timestamp}. Must be between 0 and ${selectedVideo.duration}s`);
                     return;
                 }
             }
         }
 
         // Check for duplicate timestamps
-        const timestamps = adminMessages.map(m => m.timestamp);
+        const timestamps = adminMessages.map(m => Number(m.timestamp));
         if (new Set(timestamps).size !== timestamps.length) {
             setError('Duplicate timestamps are not allowed for admin messages');
             return;
@@ -179,7 +181,10 @@ function SessionForm({ sessionId, onSuccess }: SessionFormProps) {
                     title,
                     video_id: selectedVideoId,
                     scheduled_start: scheduledStart,
-                    adminMessages: adminMessages.map(({ timestamp, message }) => ({ timestamp, message }))
+                    adminMessages: adminMessages.map(({ timestamp, message }) => ({
+                        timestamp: Number(timestamp) || 0, // Ensure valid number on submit 
+                        message
+                    }))
                 })
             });
 
@@ -354,7 +359,7 @@ function SessionForm({ sessionId, onSuccess }: SessionFormProps) {
                                     <div
                                         key={idx}
                                         className="absolute top-1/2 -ml-1.5 h-6 w-3 -translate-y-1/2 rounded bg-[#2D8CFF] border-2 border-white shadow-sm ring-1 ring-blue-100 group cursor-pointer transition-transform hover:scale-110"
-                                        style={{ left: `${(msg.timestamp / selectedVideo.duration) * 100}%` }}
+                                        style={{ left: `${(Number(msg.timestamp) / selectedVideo.duration) * 100}%` }}
                                         title={`Message at ${msg.timestamp}s`}
                                     >
                                         <div className="absolute bottom-full left-1/2 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-[10px] text-white group-hover:block">
@@ -378,7 +383,7 @@ function SessionForm({ sessionId, onSuccess }: SessionFormProps) {
                                         max={selectedVideo?.duration || 10000}
                                         className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-sm text-gray-900 focus:border-[#2D8CFF] focus:outline-none"
                                         value={msg.timestamp}
-                                        onChange={(e) => updateMessage(index, 'timestamp', parseInt(e.target.value) || 0)}
+                                        onChange={(e) => updateMessage(index, 'timestamp', e.target.value)}
                                     />
                                 </div>
                                 <div className="flex-1">

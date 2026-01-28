@@ -14,7 +14,69 @@ const handler = async (req: NextRequest, user: UserPayload) => {
         // Handle Google Drive Link (JSON payload)
         if (contentType.includes('application/json')) {
             const body = await req.json();
-            const { title, description, driveUrl, mode, duration } = body;
+            const { title, description, driveUrl, mode, duration, videoPath, thumbnailPath } = body;
+
+            // Handle Supabase Direct Upload Finalization
+            if (mode === 'supabase_direct') {
+                if (!videoPath) {
+                    return NextResponse.json(
+                        { success: false, message: 'Video path required' },
+                        { status: 400 }
+                    );
+                }
+
+                // 4. Get Public Video URL (already uploaded)
+                const { data: videoPublicData } = supabaseAdmin.storage.from('videos').getPublicUrl(videoPath);
+                const videoUrl = videoPublicData.publicUrl;
+
+                // Handle Thumbnail (if uploaded client-side or we need to upload it here? For simplicity, we might still upload thumbnail via formData or client-side. 
+                // Let's assume thumbnail is also uploaded client-side or handled separately. 
+                // However, the client might send thumbnail as a separate file?
+                // Simplest: Client uploads thumbnail via signed URL too, OR client sends thumbnail as base64?
+                // Actually, the current modal generates thumbnail. 
+                // Let's assume for now the user uploads video via signed URL, and maybe thumbnail via same way?
+                // Or we can keep thumbnail upload here if it's small? 
+                // If the thumbnail is small (<4MB), we can send it as base64 in JSON or separate request?
+                // Let's check how we handle thumbnail.
+
+                // Let's look at the usage.
+
+                let finalThumbnailUrl = '';
+                if (thumbnailPath) {
+                    const { data: thumbPublicData } = supabaseAdmin.storage.from('videos').getPublicUrl(thumbnailPath);
+                    finalThumbnailUrl = thumbPublicData.publicUrl;
+                }
+
+                // Save to Database
+                const { data: video, error: dbError } = await supabaseAdmin
+                    .from('videos')
+                    .insert({
+                        title,
+                        description,
+                        video_url: videoUrl,
+                        thumbnail_url: finalThumbnailUrl || '',
+                        duration: Math.round(Number(duration)) || 0,
+                        uploader_id: user.id,
+                        source: 'supabase',
+                    })
+                    .select()
+                    .single();
+
+                if (dbError) throw dbError;
+
+                return NextResponse.json(
+                    {
+                        success: true,
+                        video: {
+                            id: video.id,
+                            title: video.title,
+                            video_url: video.video_url,
+                            thumbnail_url: video.thumbnail_url,
+                        },
+                    },
+                    { status: 201 }
+                );
+            }
 
             if (mode === 'google_drive') {
                 const fileId = extractDriveFileId(driveUrl);

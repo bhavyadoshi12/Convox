@@ -56,7 +56,7 @@ export function generateThumbnailLink(fileId: string): string {
  */
 export async function validateDriveLink(url: string): Promise<{ isValid: boolean; fileId: string | null; error?: string }> {
     const fileId = extractDriveFileId(url);
-    
+
     if (!fileId) {
         return { isValid: false, fileId: null, error: "Invalid Google Drive URL" };
     }
@@ -65,10 +65,10 @@ export async function validateDriveLink(url: string): Promise<{ isValid: boolean
         // We attempt to fetch the thumbnail as a way to check accessibility without needing API keys
         const thumbUrl = generateThumbnailLink(fileId);
         const response = await fetch(thumbUrl, { mode: 'no-cors' }); // no-cors for client-side check
-        
+
         // Note: fetch with no-cors doesn't give us status code, but we can't do much more client-side
         // without a proxy or backend. For now, we trust the ID extraction and regex.
-        
+
         return { isValid: true, fileId };
     } catch (error) {
         return { isValid: false, fileId, error: "Link might not be public" };

@@ -54,7 +54,7 @@ export default function VideoUploadModal({ isOpen, onClose, onSuccess }: VideoUp
         if (!selectedFile) return;
 
         const validTypes = ['video/mp4', 'video/quicktime', 'video/x-msvideo']; // mp4, mov, avi
-        const maxSize = 100 * 1024 * 1024; // 100MB (Local Upload Limit)
+        const maxSize = 2000 * 1024 * 1024; // 2GB (Direct Upload Limit)
 
         if (!validTypes.includes(selectedFile.type)) {
             setError('Invalid file type. Please upload MP4, MOV, or AVI.');
@@ -247,53 +247,94 @@ export default function VideoUploadModal({ isOpen, onClose, onSuccess }: VideoUp
             return;
         }
 
-        // Supabase Mode (Existing XHR logic)
-        const formData = new FormData();
-        formData.append('video', file!);
-        formData.append('title', title);
-        formData.append('description', description);
-        formData.append('duration', duration.toString());
-        if (thumbnail) {
-            formData.append('thumbnail', thumbnail);
-        }
+        // Supabase Direct Upload Mode
+        // Token already retrieved above
 
-        const xhr = new XMLHttpRequest();
+        if (!file) return;
 
-        xhr.upload.addEventListener('progress', (event) => {
-            if (event.lengthComputable) {
-                const percent = Math.round((event.loaded / event.total) * 100);
-                setProgress(percent);
-            }
-        });
+        try {
+            // 1. Get Signed URL for Video
+            const videoResponse = await fetch('/api/admin/videos/get-upload-url', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ filename: file.name, fileType: file.type })
+            });
+            const videoData = await videoResponse.json();
+            if (!videoData.success) throw new Error(videoData.message || 'Failed to get upload URL');
 
-        xhr.addEventListener('load', () => {
-            setUploading(false);
-            if (xhr.status >= 200 && xhr.status < 300) {
-                const response = JSON.parse(xhr.responseText);
-                if (response.success) {
-                    setIsSuccess(true);
-                    setTimeout(() => {
-                        onSuccess();
-                        onClose();
-                    }, 1500);
-                } else {
-                    setError(response.message || 'Upload failed');
+            // 2. Upload Video
+            await new Promise<void>((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.upload.addEventListener('progress', (e) => {
+                    if (e.lengthComputable) {
+                        // Video is main progress (90%)
+                        setProgress(Math.round((e.loaded / e.total) * 90));
+                    }
+                });
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) resolve();
+                    else reject(new Error('Video upload failed'));
+                };
+                xhr.onerror = () => reject(new Error('Video upload network error'));
+                xhr.open('PUT', videoData.signedUrl);
+                xhr.setRequestHeader('Content-Type', file.type);
+                xhr.send(file);
+            });
+
+            // 3. Upload Thumbnail (if exists)
+            let thumbnailPath = '';
+            if (thumbnail) {
+                const thumbResponse = await fetch('/api/admin/videos/get-upload-url', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ filename: thumbnail.name, fileType: thumbnail.type })
+                });
+                const thumbData = await thumbResponse.json();
+                if (thumbData.success) {
+                    await fetch(thumbData.signedUrl, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': thumbnail.type },
+                        body: thumbnail
+                    });
+                    thumbnailPath = thumbData.fullPath;
                 }
-            } else {
-                setError('Upload failed with status ' + xhr.status);
             }
-        });
 
-        xhr.addEventListener('error', () => {
+            setProgress(95);
+
+            // 4. Finalize
+            const finalizeResponse = await fetch('/api/admin/videos/upload', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    title,
+                    description,
+                    mode: 'supabase_direct',
+                    duration,
+                    videoPath: videoData.fullPath,
+                    thumbnailPath
+                })
+            });
+
+            const finalizeData = await finalizeResponse.json();
+            if (finalizeData.success) {
+                setProgress(100);
+                setIsSuccess(true);
+                setTimeout(() => {
+                    onSuccess();
+                    onClose();
+                }, 1500);
+            } else {
+                throw new Error(finalizeData.message || 'Finalization failed');
+            }
+
+        } catch (err: any) {
             setUploading(false);
-            setError('An error occurred during upload.');
-        });
-
-        xhr.open('POST', '/api/admin/videos/upload');
-        if (token) {
-            xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+            setError(err.message || 'An error occurred during upload.');
         }
-        xhr.send(formData);
     };
 
     const isSubmitDisabled = mode === 'supabase'
@@ -302,7 +343,7 @@ export default function VideoUploadModal({ isOpen, onClose, onSuccess }: VideoUp
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <div className="w-full max-w-xl rounded-2xl bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div className="w-full max-w-xl rounded-2xl bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 max-h-[90vh] flex flex-col">
                 <div className="flex items-center justify-between border-b px-6 py-4">
                     <h2 className="text-xl font-bold text-gray-900">Add Video</h2>
                     <button
@@ -314,7 +355,7 @@ export default function VideoUploadModal({ isOpen, onClose, onSuccess }: VideoUp
                     </button>
                 </div>
 
-                <form onSubmit={handleUpload} className="p-6 space-y-6">
+                <form onSubmit={handleUpload} className="p-6 space-y-6 overflow-y-auto flex-1">
                     {isSuccess ? (
                         <div className="flex flex-col items-center justify-center py-10 text-center animate-in slide-in-from-bottom-4 duration-500">
                             <div className="mb-4 rounded-full bg-green-100 p-4">
@@ -362,7 +403,7 @@ export default function VideoUploadModal({ isOpen, onClose, onSuccess }: VideoUp
                                         <Upload className="h-8 w-8 text-[#2D8CFF]" />
                                     </div>
                                     <p className="mb-1 font-semibold text-gray-900">Click to upload or drag and drop</p>
-                                    <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">MP4, MOV, or AVI (Max 100MB)</p>
+                                    <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">MP4, MOV, or AVI (Max 2GB)</p>
                                 </div>
                             )}
 

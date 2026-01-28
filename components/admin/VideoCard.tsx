@@ -30,24 +30,45 @@ const VideoCard = ({ video, onDelete, onEdit, onPlay, formatDuration }: VideoCar
         return new Date(video.created_at).toLocaleDateString();
     }, [video.created_at]);
 
+    const [imgError, setImgError] = React.useState(false);
+
     return (
         <div className="group relative flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white transition-all hover:border-[#2D8CFF] hover:shadow-md">
             <div
                 className="relative aspect-video w-full flex-shrink-0 bg-gray-100 cursor-pointer overflow-hidden"
                 onClick={() => onPlay && onPlay(video)}
             >
-                {video.thumbnail_url ? (
-                    <Image
-                        src={video.thumbnail_url}
-                        alt={video.title}
-                        fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                        unoptimized={video.source === 'google_drive'}
-                    />
+                {video.thumbnail_url && !imgError ? (
+                    video.source === 'google_drive' ? (
+                        <img
+                            src={video.thumbnail_url}
+                            alt={video.title}
+                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            onError={() => setImgError(true)}
+                            referrerPolicy="no-referrer"
+                        />
+                    ) : (
+                        <Image
+                            src={video.thumbnail_url}
+                            alt={video.title}
+                            fill
+                            className="object-cover transition-transform duration-500 group-hover:scale-105"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                            onError={() => setImgError(true)}
+                        />
+                    )
                 ) : (
-                    <div className="flex h-full w-full items-center justify-center">
-                        <Video className="h-8 w-8 text-gray-300" />
+                    <div className="flex h-full w-full items-center justify-center bg-gray-50">
+                        {video.source === 'google_drive' ? (
+                            <div className="flex flex-col items-center gap-1">
+                                <div className="rounded-lg bg-green-50 p-2">
+                                    <Video className="h-6 w-6 text-green-600" />
+                                </div>
+                                <span className="text-[10px] font-medium text-green-700">Drive Video</span>
+                            </div>
+                        ) : (
+                            <Video className="h-8 w-8 text-gray-300" />
+                        )}
                     </div>
                 )}
 
