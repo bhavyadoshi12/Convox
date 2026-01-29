@@ -1,12 +1,16 @@
+"use client";
+
 import React, { memo, useMemo } from 'react';
 import { Calendar, Clock, Video, Activity, Play, Edit, Trash2, MoreVertical, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import Link from 'next/link';
+import ParticipantCount from '@/components/student/ParticipantCount';
 
 interface SessionData {
     id: string;
     sessionId: string;
+    session_id?: string;
     title: string;
     status: 'scheduled' | 'live' | 'ended';
     scheduled_start: string;
@@ -58,6 +62,11 @@ const SessionCard = ({ session, onDelete, onEdit }: SessionCardProps) => {
                 </span>
 
                 <div className="flex items-center gap-1">
+                    {/* Participant Count for Admin */}
+                    <div className="mr-2">
+                        <ParticipantCount sessionId={session.sessionId || session.session_id || session.id} />
+                    </div>
+
                     <button
                         onClick={() => onEdit && onEdit(session)}
                         className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-50 hover:text-blue-600 transition-colors"

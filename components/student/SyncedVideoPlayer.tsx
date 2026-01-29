@@ -75,6 +75,15 @@ const SyncedVideoPlayer = React.forwardRef<any, SyncedVideoPlayerProps>(
             const start = new Date(scheduledStart).getTime();
             const elapsed = Math.floor((now - start) / 1000);
 
+            // Aggressive Sync Check (Interval based)
+            if (status === 'playing' && !isDrive && innerRef.current && !innerRef.current.paused) {
+                const expectedTime = (now - start) / 1000;
+                if (Math.abs(innerRef.current.currentTime - expectedTime) > 3) {
+                    console.log("Aggressive Sync (Interval): Drifting detected, seeking to", expectedTime);
+                    innerRef.current.currentTime = expectedTime;
+                }
+            }
+
             if (elapsed < 0) {
                 setStatus("countdown");
                 setTimeRemaining(Math.abs(elapsed));
@@ -87,7 +96,7 @@ const SyncedVideoPlayer = React.forwardRef<any, SyncedVideoPlayerProps>(
                     setStatus("playing");
                 }
             }
-        }, [scheduledStart, videoDuration, status]);
+        }, [scheduledStart, videoDuration, status, isDrive]);
 
         // Native Playback Helpers (Supabase Only)
         const safePlay = useCallback(async (video: HTMLVideoElement) => {
@@ -140,12 +149,27 @@ const SyncedVideoPlayer = React.forwardRef<any, SyncedVideoPlayerProps>(
                 setIsBuffering(false);
                 if (status === "playing" || status === "replay") {
                     const elapsed = (Date.now() - new Date(scheduledStart).getTime()) / 1000;
+
+                    // Initial Seek
                     if (status === "playing") video.currentTime = elapsed;
                     safePlay(video);
                 }
             };
             const onWaiting = () => setIsBuffering(true);
-            const onPlaying = () => { setIsBuffering(false); setIsPlaying(true); playingRef.current = true; };
+            const onPlaying = () => {
+                setIsBuffering(false);
+                setIsPlaying(true);
+                playingRef.current = true;
+
+                // Aggressive Sync Check on Play
+                if (status === 'playing') {
+                    const expectedTime = (Date.now() - new Date(scheduledStart).getTime()) / 1000;
+                    if (Math.abs(video.currentTime - expectedTime) > 3) {
+                        console.log("Aggressive Sync: Drifting detected, seeking to", expectedTime);
+                        video.currentTime = expectedTime;
+                    }
+                }
+            };
             const onPause = () => { setIsPlaying(false); playingRef.current = false; };
             const onTimeUpdate = () => setCurrentTime(video.currentTime);
             const onDurationChange = () => setDuration(video.duration);
