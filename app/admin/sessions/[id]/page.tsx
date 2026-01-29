@@ -19,6 +19,10 @@ interface PageProps {
     }>;
 }
 
+const AdminLivePanel = dynamic(() => import('@/components/admin/AdminLivePanel'), {
+    loading: () => <div className="h-full w-full animate-pulse bg-gray-100 rounded-2xl"></div>
+});
+
 export default function SessionDetailsPage({ params }: PageProps) {
     const { id } = use(params);
 
@@ -32,12 +36,19 @@ export default function SessionDetailsPage({ params }: PageProps) {
                     <ChevronLeft className="h-5 w-5 text-gray-600" />
                 </Link>
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Edit Session</h1>
-                    <p className="text-gray-500">Manage session details and automated messages</p>
+                    <h1 className="text-2xl font-bold text-gray-900">Manage Session</h1>
+                    <p className="text-gray-500">Edit details and moderate live chat</p>
                 </div>
             </div>
 
-            <SessionForm sessionId={id} />
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                <div className="xl:col-span-2">
+                    <SessionForm sessionId={id} />
+                </div>
+                <div className="xl:col-span-1">
+                    <AdminLivePanel sessionId={id} />
+                </div>
+            </div>
         </div>
     );
 }
