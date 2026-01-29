@@ -20,9 +20,10 @@ interface VideoPlayerModalProps {
         drive_file_id?: string;
         duration?: number;
     } | null;
+    sessionId?: string; // Add sessionId for sync
 }
 
-export default function VideoPlayerModal({ isOpen, onClose, video }: VideoPlayerModalProps) {
+export default function VideoPlayerModal({ isOpen, onClose, video, sessionId }: VideoPlayerModalProps) {
     const [playing, setPlaying] = useState(false);
     const [volume, setVolume] = useState(1);
     const [muted, setMuted] = useState(false);
@@ -124,11 +125,34 @@ export default function VideoPlayerModal({ isOpen, onClose, video }: VideoPlayer
         setPlaying(false);
     };
 
+    const broadcastSync = async (action: 'play' | 'pause' | 'seek', time: number) => {
+        if (!sessionId || !video) return;
+        try {
+            await fetch('/api/pusher/trigger', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    channel: `session-${sessionId}`,
+                    event: 'client-video-sync',
+                    data: {
+                        action,
+                        currentTime: time,
+                        timestamp: Date.now()
+                    }
+                })
+            });
+        } catch (err) {
+            console.error('Failed to broadcast sync:', err);
+        }
+    };
+
     const togglePlay = () => {
         if (playingRef.current) {
             safePause();
+            broadcastSync('pause', currentTime);
         } else {
             safePlay();
+            broadcastSync('play', currentTime);
         }
     };
 
@@ -179,6 +203,15 @@ export default function VideoPlayerModal({ isOpen, onClose, video }: VideoPlayer
         setCurrentTime(time);
         if (videoRef.current) {
             videoRef.current.currentTime = time;
+        }
+    };
+
+    const handleSeekEnd = () => {
+        setIsSeaking(false);
+        broadcastSync('seek', currentTime);
+        // If we were playing, ensure we resume and sync play state
+        if (playingRef.current) {
+            broadcastSync('play', currentTime);
         }
     };
 
@@ -355,8 +388,12 @@ export default function VideoPlayerModal({ isOpen, onClose, video }: VideoPlayer
                                     step="any"
                                     value={currentTime}
                                     onChange={handleSeek}
-                                    onMouseDown={() => setIsSeaking(true)}
-                                    onMouseUp={() => setIsSeaking(false)}
+                                    onMouseDown={() => {
+                                        setIsSeaking(true);
+                                        // Optional: pause while seeking?
+                                    }}
+                                    onMouseUp={handleSeekEnd}
+                                    onTouchEnd={handleSeekEnd} // Mobile support
                                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                 />
                             </div>

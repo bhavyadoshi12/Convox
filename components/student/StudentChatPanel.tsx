@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Send, Users, MessageSquare } from 'lucide-react';
+import { Send, Users, MessageSquare, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getPusherClient } from '@/lib/pusher-client';
 import ChatMessage from './ChatMessage';
@@ -20,21 +20,40 @@ interface StudentChatPanelProps {
     sessionId: string;
     currentUserEmail: string;
     currentUserId?: string;
+    currentUserRole?: string; // Added role prop
     messages: ChatMessage[];
     loading?: boolean;
 }
 
-export default function StudentChatPanel({ sessionId, currentUserEmail, currentUserId, messages, loading = false }: StudentChatPanelProps) {
+export default function StudentChatPanel({ sessionId, currentUserEmail, currentUserId, currentUserRole, messages: initialMessages, loading = false }: StudentChatPanelProps) {
     const [inputValue, setInputValue] = useState('');
     const [sending, setSending] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const [localMessages, setLocalMessages] = useState<ChatMessage[]>([]); // manage messages locally to handle deletes
+
+    useEffect(() => {
+        setLocalMessages(initialMessages);
+    }, [initialMessages]);
 
     // Auto-scroll to bottom
     useEffect(() => {
         if (scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
-    }, [messages]);
+    }, [localMessages]);
+
+    // Listen for deletes
+    useEffect(() => {
+        const pusher = getPusherClient();
+        const channel = pusher.subscribe(`session-${sessionId}`);
+        channel.bind('message-deleted', (data: { messageId: string }) => {
+            setLocalMessages(prev => prev.filter(m => m.id !== data.messageId));
+        });
+
+        return () => {
+            channel.unbind('message-deleted');
+        };
+    }, [sessionId]);
 
     const handleSendMessage = useCallback(async (e?: React.FormEvent) => {
         e?.preventDefault();
@@ -51,7 +70,7 @@ export default function StudentChatPanel({ sessionId, currentUserEmail, currentU
                 body: JSON.stringify({
                     sessionId,
                     message: inputValue,
-                    type: 'user'
+                    type: currentUserRole === 'admin' ? 'admin' : 'user' // auto-detect type
                 })
             });
 
@@ -66,7 +85,28 @@ export default function StudentChatPanel({ sessionId, currentUserEmail, currentU
         } finally {
             setSending(false);
         }
-    }, [inputValue, sending, sessionId]);
+    }, [inputValue, sending, sessionId, currentUserRole]);
+
+    const handleDeleteMessage = async (messageId: string) => {
+        if (!confirm('Are you sure you want to delete this message?')) return;
+        try {
+            await fetch('/api/chat/delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({
+                    sessionId,
+                    messageId
+                })
+            });
+            // Optimistic update
+            setLocalMessages(prev => prev.filter(m => m.id !== messageId));
+        } catch (err) {
+            console.error('Delete failed', err);
+        }
+    };
 
     return (
         <div className="flex flex-col h-full bg-white border-l border-gray-100 shadow-xl overflow-hidden">
@@ -91,18 +131,28 @@ export default function StudentChatPanel({ sessionId, currentUserEmail, currentU
                         </div>
                         <p className="text-xs font-medium animate-pulse">Loading messages...</p>
                     </div>
-                ) : messages.length === 0 ? (
+                ) : localMessages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-zinc-300 text-center px-6">
                         <MessageSquare className="h-8 w-8 mb-2 opacity-20" />
                         <p className="text-sm">No messages yet. Be the first to say something!</p>
                     </div>
                 ) : (
-                    messages.map((msg, idx) => (
-                        <ChatMessage
-                            key={idx}
-                            msg={msg}
-                            isMe={!!(currentUserId ? msg.userId === currentUserId : (currentUserEmail && msg.sender === currentUserEmail.split('@')[0]))}
-                        />
+                    localMessages.map((msg, idx) => (
+                        <div key={idx} className="group relative">
+                            <ChatMessage
+                                msg={msg}
+                                isMe={!!(currentUserId ? msg.userId === currentUserId : (currentUserEmail && msg.sender === currentUserEmail.split('@')[0]))}
+                            />
+                            {currentUserRole === 'admin' && msg.id && (
+                                <button
+                                    onClick={() => handleDeleteMessage(msg.id!)}
+                                    className="absolute top-0 right-0 p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 rounded"
+                                    title="Delete Message"
+                                >
+                                    <Trash2 className="h-3 w-3" />
+                                </button>
+                            )}
+                        </div>
                     ))
                 )}
             </div>
@@ -132,3 +182,4 @@ export default function StudentChatPanel({ sessionId, currentUserEmail, currentU
         </div >
     );
 }
+

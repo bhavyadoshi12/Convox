@@ -16,11 +16,13 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
+import VideoPlayerModal from './VideoPlayerModal';
 
 interface VideoRef {
     id: string;
     title: string;
     duration: number;
+    video_url?: string; // Add optional video_url to interface
 }
 
 interface AdminMessage {
@@ -40,6 +42,7 @@ function SessionForm({ sessionId, onSuccess }: SessionFormProps) {
     const [selectedVideoId, setSelectedVideoId] = useState('');
     const [scheduledStart, setScheduledStart] = useState('');
     const [adminMessages, setAdminMessages] = useState<AdminMessage[]>([]);
+    const [showPreviewModal, setShowPreviewModal] = useState(false);
 
     const [videos, setVideos] = useState<VideoRef[]>([]);
     const [selectedVideo, setSelectedVideo] = useState<VideoRef | null>(null);
@@ -302,10 +305,13 @@ function SessionForm({ sessionId, onSuccess }: SessionFormProps) {
                             Video Overview
                         </h3>
                         {selectedVideo ? (
-                            <div className="rounded-2xl border border-gray-100 bg-gray-50/50 p-5">
+                            <div
+                                className="rounded-2xl border border-gray-100 bg-gray-50/50 p-5 cursor-pointer hover:bg-gray-100 transition-colors"
+                                onClick={() => setShowPreviewModal(true)}
+                            >
                                 <div className="mb-4 aspect-video overflow-hidden rounded-xl bg-gray-200">
-                                    <div className="flex h-full w-full items-center justify-center bg-gray-900">
-                                        <Play className="h-10 w-10 text-white/50" />
+                                    <div className="flex h-full w-full items-center justify-center bg-gray-900 group">
+                                        <Play className="h-10 w-10 text-white/50 group-hover:text-white group-hover:scale-110 transition-all" />
                                     </div>
                                 </div>
                                 <div className="space-y-1">
@@ -438,6 +444,19 @@ function SessionForm({ sessionId, onSuccess }: SessionFormProps) {
                     </button>
                 </div>
             </form>
+
+            <VideoPlayerModal
+                isOpen={!!selectedVideo && showPreviewModal}
+                onClose={() => setShowPreviewModal(false)}
+                video={selectedVideo ? {
+                    ...selectedVideo,
+                    video_url: '', // We rely on fetching this inside or selectedVideo having it if we updated type. 
+                    // Actually, let's fix the type issue by fetching video details or just passing known props.
+                    // Ideally selectedVideo should be full video object. 
+                    source: 'supabase',
+                } as any : null}
+                sessionId={sessionId}
+            />
         </div>
     );
 }

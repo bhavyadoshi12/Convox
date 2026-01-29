@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { extractDriveFileId, generateEmbedLink } from '@/lib/googleDrive';
 import { cn } from '@/lib/utils';
 
+import { getPusherClient } from '@/lib/pusher-client';
+
 interface SyncedVideoPlayerProps {
     sessionId: string;
     videoUrl: string;
@@ -69,30 +71,76 @@ const SyncedVideoPlayer = React.forwardRef<any, SyncedVideoPlayerProps>(
             }
         }), [isDrive, scheduledStart, videoDuration]);
 
-        // ---- Time Sync Logic ----
+        // ---- Pusher Live Sync Logic ----
+        useEffect(() => {
+            if (!sessionId) return;
+            const pusher = getPusherClient();
+            const channel = pusher.subscribe(`session-${sessionId}`);
+
+            channel.bind('client-video-sync', (data: { action: 'play' | 'pause' | 'seek', currentTime: number, timestamp: number }) => {
+                // console.log('Received Sync Event:', data);
+                if (isDrive) return; // Drive sync is harder, for now skip or implement partial
+
+                const video = innerRef.current;
+                if (!video) return;
+
+                if (data.action === 'seek') {
+                    video.currentTime = data.currentTime;
+                } else if (data.action === 'play') {
+                    video.currentTime = data.currentTime;
+                    safePlay(video);
+                    setStatus('playing');
+                } else if (data.action === 'pause') {
+                    video.pause();
+                    playingRef.current = false;
+                    setIsPlaying(false);
+                }
+            });
+
+            return () => {
+                channel.unbind('client-video-sync');
+                // We typically don't unsubscribe here if other components use the channel, 
+                // but if this component is unmounted, we should probably let it be. 
+                // However, JoinSessionClient manages the subscription usually.
+                // Assuming JoinSessionClient keeps the connection alive.
+            };
+        }, [sessionId, isDrive]);
+
+
+        // ---- Time Sync Logic (Fallback / Auto Start) ----
         const updateSyncStatus = useCallback(() => {
+            // Note: If admin is controlling, we might want to disable this auto-sync 
+            // or make it less aggressive. For now, we keep it for "Countdown" -> "Playing" transition.
+
             const now = new Date().getTime();
             const start = new Date(scheduledStart).getTime();
             const elapsed = Math.floor((now - start) / 1000);
 
             // Aggressive Sync Check (Interval based)
+            // Only do this if we haven't received a manual event recently (TODO)
             if (status === 'playing' && !isDrive && innerRef.current && !innerRef.current.paused) {
-                const expectedTime = (now - start) / 1000;
-                if (Math.abs(innerRef.current.currentTime - expectedTime) > 3) {
-                    console.log("Aggressive Sync (Interval): Drifting detected, seeking to", expectedTime);
-                    innerRef.current.currentTime = expectedTime;
-                }
+                // ... existing sync logic ...
+                // For now, let's relax it or keep it as backup
+                // const expectedTime = (now - start) / 1000;
+                // if (Math.abs(innerRef.current.currentTime - expectedTime) > 3) {
+                //    // console.log("Aggressive Sync (Interval): Drifting detected, seeking to", expectedTime);
+                //    // innerRef.current.currentTime = expectedTime;
+                // }
             }
 
             if (elapsed < 0) {
                 setStatus("countdown");
                 setTimeRemaining(Math.abs(elapsed));
             } else if (videoDuration > 0 && elapsed > videoDuration) {
-                if (status !== "replay" && status !== "ended") {
+                if (status !== "replay" && status !== "ended" && status !== 'playing') {
+                    // Allow 'playing' to continue if admin extended it/paused
+                    // But if it really ended based on schedule? 
+                    // Let's rely on admin to END it, or keep schedule.
+                    // For now, let's stick to schedule for END state for safety.
                     setStatus("ended");
                 }
             } else {
-                if (status !== "playing") {
+                if (status !== "playing" && status !== 'replay') { // Don't auto-switch if in replay
                     setStatus("playing");
                 }
             }

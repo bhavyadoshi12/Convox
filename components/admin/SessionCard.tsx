@@ -117,7 +117,11 @@ const SessionCard = ({ session, onDelete, onEdit }: SessionCardProps) => {
 
             <div className="mt-6 flex gap-3">
                 <Link
-                    href={`/admin/sessions/${session.sessionId || session.id}`}
+                    href={
+                        session.status === 'live'
+                            ? `/join/${session.sessionId || session.id}`
+                            : `/admin/sessions/${session.sessionId || session.id}`
+                    }
                     className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-gray-900 py-2.5 text-xs font-bold text-white transition-all hover:bg-black active:scale-95"
                 >
                     <Play className="h-3 w-3" />

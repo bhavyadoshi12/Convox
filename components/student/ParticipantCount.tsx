@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Users, ChevronDown, UserCircle } from 'lucide-react';
+import { Users, ChevronDown, UserCircle, Hand } from 'lucide-react';
 import { getPusherClient } from '@/lib/pusher-client';
 import { cn } from '@/lib/utils';
 
@@ -15,14 +15,18 @@ interface Member {
         name: string;
         email: string;
         role: string;
-    }
+    };
+    isHandRaised?: boolean;
 }
 
 export default function ParticipantCount({ sessionId }: ParticipantCountProps) {
-    const [count, setCount] = useState(0); // Initialize with 0
+    // const [count, setCount] = useState(0); // Removed separate count state
     const [members, setMembers] = useState<Member[]>([]);
     const [isOpen, setIsOpen] = useState(false);
     const popoverRef = useRef<HTMLDivElement>(null);
+
+    // Derived count from members length
+    const count = members.length;
 
     // Close popover when clicking outside
     useEffect(() => {
@@ -43,33 +47,53 @@ export default function ParticipantCount({ sessionId }: ParticipantCountProps) {
         const channel = pusher.subscribe(channelName);
 
         channel.bind('pusher:subscription_succeeded', (data: any) => {
-            setCount(data.count);
-            // Transform members object to array
+            // Transform members object to array and filter out admins
             const memberList: Member[] = [];
             if (data.members) {
                 Object.keys(data.members).forEach(id => {
-                    memberList.push({
-                        id,
-                        info: data.members[id]
-                    });
+                    const memberInfo = data.members[id];
+                    if (memberInfo.role !== 'admin') {
+                        memberList.push({
+                            id,
+                            info: memberInfo
+                        });
+                    }
                 });
             }
             setMembers(memberList);
         });
 
         channel.bind('pusher:member_added', (member: Member) => {
-            setCount(prev => prev + 1);
-            setMembers(prev => [...prev, member]);
+            if (member.info.role !== 'admin') {
+                setMembers(prev => {
+                    // Avoid duplicates just in case
+                    if (prev.some(m => m.id === member.id)) return prev;
+                    return [...prev, member];
+                });
+            }
         });
 
         channel.bind('pusher:member_removed', (member: Member) => {
-            setCount(prev => Math.max(0, prev - 1));
             setMembers(prev => prev.filter(m => m.id !== member.id));
+        });
+
+        // Listen for Hand Raises (on the public session channel, or just reuse logic if triggered on presence)
+        // Since API triggers on `session-${sessionId}`, we subscribe to it.
+        const eventChannel = pusher.subscribe(`session-${sessionId}`);
+        eventChannel.bind('client-hand-update', (data: { userId: string, isRaised: boolean }) => {
+            setMembers(prev => prev.map(m => {
+                if (m.id === data.userId) {
+                    return { ...m, isHandRaised: data.isRaised };
+                }
+                return m;
+            }));
         });
 
         return () => {
             channel.unbind_all();
+            eventChannel.unbind_all();
             pusher.unsubscribe(channelName);
+            pusher.unsubscribe(`session-${sessionId}`);
         };
     }, [sessionId]);
 
@@ -111,14 +135,15 @@ export default function ParticipantCount({ sessionId }: ParticipantCountProps) {
                                         {member.info.name ? member.info.name.charAt(0).toUpperCase() : '?'}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="truncate text-xs font-bold text-gray-900">
+                                        <p className="truncate text-xs font-bold text-gray-900 flex items-center gap-1">
                                             {member.info.name || 'Anonymous'}
+                                            {member.isHandRaised && <Hand className="h-3 w-3 text-orange-500 animate-pulse" />}
                                         </p>
                                         <p className="truncate text-[10px] text-gray-500 capitalize">
                                             {member.info.role}
                                         </p>
                                     </div>
-                                    <div className="h-2 w-2 rounded-full bg-green-500 shadow-sm animate-pulse" title="Online" />
+                                    <div className={cn("h-2 w-2 rounded-full shadow-sm animate-pulse", member.isHandRaised ? "bg-orange-500" : "bg-green-500")} title={member.isHandRaised ? "Hand Raised" : "Online"} />
                                 </div>
                             ))
                         )}

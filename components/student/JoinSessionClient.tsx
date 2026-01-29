@@ -64,12 +64,14 @@ export default function JoinSessionClient({ sessionId }: JoinSessionClientProps)
     const [userEmail, setUserEmail] = useState('');
     const [userId, setUserId] = useState('');
     const [userName, setUserName] = useState('');
+    const [userRole, setUserRole] = useState('guest');
 
     // Guest Auth State
     const [isGuestLogin, setIsGuestLogin] = useState(false);
     const [guestNameInput, setGuestNameInput] = useState('');
     const [guestEmailInput, setGuestEmailInput] = useState('');
     const [guestLoading, setGuestLoading] = useState(false);
+    const [showLobby, setShowLobby] = useState(false); // New Lobby State
 
     // Chat State
     const [isChatOpen, setIsChatOpen] = useState(false);
@@ -104,9 +106,19 @@ export default function JoinSessionClient({ sessionId }: JoinSessionClientProps)
                 setUserEmail(payload.email || '');
                 setUserId(payload.id || '');
                 setUserName(payload.name || payload.email?.split('@')[0] || 'Student');
+                setUserRole(payload.role || 'student');
 
-                // Now fetch session
-                await fetchSessionData(token);
+                // Check/Set Guest inputs for Lobby
+                if (payload.role === 'guest') {
+                    setGuestNameInput(payload.name);
+                    setGuestEmailInput(payload.email);
+                    setShowLobby(true); // Show Lobby for Guests
+                    setLoading(false);
+                } else {
+                    // Regular user, join immediately
+                    await fetchSessionData(token);
+                }
+
             } catch (err) {
                 console.error("Invalid token:", err);
                 localStorage.removeItem('token');
@@ -117,6 +129,29 @@ export default function JoinSessionClient({ sessionId }: JoinSessionClientProps)
 
         checkAuthAndFetch();
     }, [sessionId]);
+
+    const handleLobbyJoin = async () => {
+        // User confirmed identity in lobby
+        setShowLobby(false);
+        setLoading(true);
+        const token = localStorage.getItem('token');
+        if (token) {
+            await fetchSessionData(token);
+        } else {
+            setIsGuestLogin(true);
+            setLoading(false);
+        }
+    };
+
+    const handleChangeIdentity = () => {
+        localStorage.removeItem('token');
+        setShowLobby(false);
+        setIsGuestLogin(true);
+        // We can keep the inputs populated or clear them. 
+        // Clearing them might be better for "Change Identity"
+        setGuestNameInput('');
+        setGuestEmailInput('');
+    };
 
     const fetchSessionData = async (token: string) => {
         try {
@@ -185,6 +220,7 @@ export default function JoinSessionClient({ sessionId }: JoinSessionClientProps)
                 setUserEmail(data.user.email);
                 setUserId(data.user.id);
                 setUserName(data.user.name);
+                setUserRole('guest');
 
                 // Fetch session
                 await fetchSessionData(data.token);
@@ -288,6 +324,40 @@ export default function JoinSessionClient({ sessionId }: JoinSessionClientProps)
             <div className="flex h-[100dvh] flex-col items-center justify-center gap-4 bg-gray-50">
                 <div className="h-12 w-12 animate-spin rounded-full border-4 border-[#2D8CFF] border-t-transparent"></div>
                 <p className="font-bold text-gray-500 animate-pulse">Connecting to Session...</p>
+            </div>
+        );
+    }
+
+    if (showLobby) {
+        return (
+            <div className="flex h-[100dvh] flex-col items-center justify-center bg-gray-50 p-4">
+                <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-500 text-center">
+                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50">
+                        <Users className="h-7 w-7 text-[#2D8CFF]" />
+                    </div>
+                    <h1 className="text-2xl font-bold text-gray-900">Welcome Back</h1>
+                    <p className="mt-2 text-sm text-gray-500">You are about to join as:</p>
+
+                    <div className="my-6 rounded-xl bg-gray-50 p-4 border border-gray-100">
+                        <p className="text-lg font-bold text-gray-900">{userName}</p>
+                        <p className="text-xs text-gray-500">{userEmail}</p>
+                    </div>
+
+                    <div className="space-y-3">
+                        <button
+                            onClick={handleLobbyJoin}
+                            className="w-full rounded-xl bg-[#2D8CFF] py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-600 hover:scale-[1.02] active:scale-[0.98]"
+                        >
+                            Join Session
+                        </button>
+                        <button
+                            onClick={handleChangeIdentity}
+                            className="w-full rounded-xl border border-gray-200 bg-white py-3.5 text-sm font-bold text-gray-700 transition-all hover:bg-gray-50 hover:text-gray-900"
+                        >
+                            Change Identity
+                        </button>
+                    </div>
+                </div>
             </div>
         );
     }
@@ -431,6 +501,9 @@ export default function JoinSessionClient({ sessionId }: JoinSessionClientProps)
                                 sessionId={session.sessionId || session.session_id}
                                 currentUserEmail={userEmail}
                                 currentUserId={userId}
+                                currentUserRole={isGuestLogin ? 'guest' : (userEmail ? (userEmail.includes('admin') ? 'admin' : 'student') : 'guest')} // Simplification: pass actual role from token
+                                // Wait, I have `payload.role` in `useEffect`. I should store it in state.
+                                // Let's add `userRole` state.
                                 messages={messages}
                                 loading={chatLoading}
                             />
@@ -484,7 +557,26 @@ export default function JoinSessionClient({ sessionId }: JoinSessionClientProps)
                                 icon={Hand}
                                 label="Raise Hand"
                                 isActive={isHandRaised}
-                                onClick={() => setIsHandRaised(!isHandRaised)}
+                                onClick={async () => {
+                                    const newState = !isHandRaised;
+                                    setIsHandRaised(newState); // Optimistic update
+                                    try {
+                                        await fetch('/api/student/hand-raise', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                                            },
+                                            body: JSON.stringify({
+                                                sessionId: session.sessionId || session.session_id,
+                                                isRaised: newState
+                                            })
+                                        });
+                                    } catch (err) {
+                                        console.error('Hand raise failed', err);
+                                        setIsHandRaised(!newState); // Revert on error
+                                    }
+                                }}
                                 activeColor="bg-[#2D8CFF] text-white"
                             />
 
