@@ -605,7 +605,7 @@ export default function JoinSessionClient({ sessionId }: JoinSessionClientProps)
                     )}
 
                     <Link
-                        href="/student"
+                        href={userRole === 'admin' ? `/admin/sessions/${sessionId}` : '/student'}
                         className="ml-4 rounded-lg bg-red-500 px-5 py-2 text-xs font-bold text-white transition-all hover:bg-red-600 active:scale-95"
                     >
                         {isGuestLogin ? 'Exit' : 'Leave'}
