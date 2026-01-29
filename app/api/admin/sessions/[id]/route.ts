@@ -235,6 +235,17 @@ const deleteHandler = async (req: NextRequest, user: UserPayload, context: Route
         await supabase.from('admin_messages').delete().eq('session_id', targetSession.id);
         await supabase.from('chat_messages').delete().eq('session_id', targetSession.id);
 
+        // Delete associated video if it exists
+        if (targetSession.video_id) {
+            const { error: videoDeleteError } = await supabase.from('videos').delete().eq('id', targetSession.video_id);
+            if (videoDeleteError) {
+                console.error('Failed to delete associated video:', videoDeleteError);
+                // We don't throw here to ensure session deletion proceeds, or optionally we could throw
+            } else {
+                console.log(`Associated video ${targetSession.video_id} deleted successfully.`);
+            }
+        }
+
         const { error } = await supabase.from('sessions').delete().eq('id', targetSession.id);
         if (error) throw error;
 
