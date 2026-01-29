@@ -206,7 +206,8 @@ export default function JoinSessionClient({ sessionId }: JoinSessionClientProps)
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     name: guestNameInput,
-                    email: guestEmailInput
+                    email: guestEmailInput,
+                    sessionId: sessionId
                 })
             });
             const data = await response.json();

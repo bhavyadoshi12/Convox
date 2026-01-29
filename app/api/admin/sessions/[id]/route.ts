@@ -9,11 +9,32 @@ interface RouteContext {
     }>;
 }
 
+// Helper to cleanup guests
+async function deleteSessionGuests(sessionId: string) {
+    if (!sessionId) return;
+    try {
+        // Find users with matching session_id in avatar_url
+        // Using ilike for pattern matching
+        const { error } = await supabase
+            .from('users')
+            .delete()
+            .ilike('avatar_url', `%session_id=${sessionId}%`); // Matches the tag we added
+
+        if (error) {
+            console.error('Guest Cleanup Error:', error);
+        } else {
+            console.log(`Cleaned up guests for session ${sessionId}`);
+        }
+    } catch (err) {
+        console.error('Guest Cleanup Exception:', err);
+    }
+}
+
 const handler = async (req: NextRequest, user: UserPayload, context: RouteContext) => {
     try {
         const { id } = await context.params;
         const body = await req.json();
-        const { title, scheduled_start, adminMessages } = body;
+        const { title, scheduled_start, adminMessages, status } = body; // Destructure status
 
         // Fetch Session
         const { data: session, error } = await supabase
@@ -42,6 +63,15 @@ const handler = async (req: NextRequest, user: UserPayload, context: RouteContex
         }
 
         const updates: any = {};
+
+        // Explicit status update handling
+        if (status) {
+            updates.status = status;
+            // If ending session, cleanup guests
+            if (status === 'ended') {
+                await deleteSessionGuests(targetSession.session_id);
+            }
+        }
 
         // Update Title
         if (title) updates.title = title;
@@ -156,6 +186,7 @@ const handler = async (req: NextRequest, user: UserPayload, context: RouteContex
 
         // Trigger Real-time Event
         const { pusherServer } = await import('@/lib/pusher-server');
+        // If status changed to ended, trigger specific event if needed, but generic update handles it for now
         await pusherServer.trigger('sessions', 'session-updated', enrichedSession);
 
         return NextResponse.json({ success: true, session: enrichedSession }, { status: 200 });
@@ -189,6 +220,12 @@ const deleteHandler = async (req: NextRequest, user: UserPayload, context: Route
                 { success: false, message: 'Session not found' },
                 { status: 404 }
             );
+        }
+
+        // Cleanup Guests associated with this session before deleting session
+        // (Using session_id which is the public ID usually used by guests)
+        if (targetSession.session_id) {
+            await deleteSessionGuests(targetSession.session_id);
         }
 
         // Allow deleting any session regardless of status

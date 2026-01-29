@@ -6,7 +6,7 @@ import bcrypt from 'bcryptjs';
 
 export async function POST(req: NextRequest) {
     try {
-        const { name, email: providedEmail } = await req.json();
+        const { name, email: providedEmail, sessionId } = await req.json();
 
         if (!name || name.trim().length === 0) {
             return NextResponse.json(
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
                 email: email.toLowerCase(),
                 password_hash: passwordHash,
                 role: 'student', // Workaround: DB has a CHECK constraint allowing only 'student'/'admin'. We use 'student' here but issue a 'guest' token.
-                avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&is_guest=true`
+                avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&is_guest=true&session_id=${sessionId || ''}`
             })
             .select()
             .single();
