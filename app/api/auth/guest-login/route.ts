@@ -40,7 +40,11 @@ export async function POST(req: NextRequest) {
             // Fallback: If DB insert fails (e.g. email collision), try again or fail
             // For now, let's return error so we know.
             return NextResponse.json(
-                { success: false, message: 'Could not create guest session. Please try again.' },
+                {
+                    success: false,
+                    message: `Could not create guest session: ${error.message || JSON.stringify(error)}`,
+                    details: error
+                },
                 { status: 500 }
             );
         }
