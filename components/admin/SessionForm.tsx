@@ -180,7 +180,7 @@ function SessionForm({ sessionId, onSuccess }: SessionFormProps) {
                 body: JSON.stringify({
                     title,
                     video_id: selectedVideoId,
-                    scheduled_start: scheduledStart,
+                    scheduled_start: new Date(scheduledStart).toISOString(),
                     adminMessages: adminMessages.map(({ timestamp, message }) => ({
                         timestamp: Number(timestamp) || 0, // Ensure valid number on submit 
                         message

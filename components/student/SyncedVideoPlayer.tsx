@@ -89,12 +89,6 @@ const SyncedVideoPlayer = React.forwardRef<any, SyncedVideoPlayerProps>(
             }
         }, [scheduledStart, videoDuration, status]);
 
-        useEffect(() => {
-            updateSyncStatus();
-            const interval = setInterval(updateSyncStatus, 1000);
-            return () => clearInterval(interval);
-        }, [updateSyncStatus]);
-
         // Native Playback Helpers (Supabase Only)
         const safePlay = useCallback(async (video: HTMLVideoElement) => {
             try {
@@ -116,6 +110,19 @@ const SyncedVideoPlayer = React.forwardRef<any, SyncedVideoPlayerProps>(
                 }
             }
         }, []);
+
+        useEffect(() => {
+            updateSyncStatus();
+            const interval = setInterval(updateSyncStatus, 1000);
+            return () => clearInterval(interval);
+        }, [updateSyncStatus]);
+
+        // Auto-play trigger when status becomes 'playing'
+        useEffect(() => {
+            if (status === 'playing' && !isDrive && innerRef.current) {
+                safePlay(innerRef.current);
+            }
+        }, [status, isDrive, safePlay]);
 
         useEffect(() => {
             if (isDrive) {
@@ -160,14 +167,25 @@ const SyncedVideoPlayer = React.forwardRef<any, SyncedVideoPlayerProps>(
             };
         }, [isDrive, status, scheduledStart, safePlay]);
 
-        const toggleFullscreen = () => {
+        // Fullscreen Logic with Event Listener
+        useEffect(() => {
+            const handleFullscreenChange = () => {
+                setIsFullscreen(!!document.fullscreenElement);
+            };
+            document.addEventListener('fullscreenchange', handleFullscreenChange);
+            return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+        }, []);
+
+        const toggleFullscreen = async () => {
             if (!containerRef.current) return;
-            if (!document.fullscreenElement) {
-                containerRef.current.requestFullscreen();
-                setIsFullscreen(true);
-            } else {
-                document.exitFullscreen();
-                setIsFullscreen(false);
+            try {
+                if (!document.fullscreenElement) {
+                    await containerRef.current.requestFullscreen();
+                } else {
+                    if (document.exitFullscreen) await document.exitFullscreen();
+                }
+            } catch (err) {
+                console.error("Fullscreen error:", err);
             }
         };
 
@@ -221,11 +239,37 @@ const SyncedVideoPlayer = React.forwardRef<any, SyncedVideoPlayerProps>(
                     />
                 )}
 
-                {/* Overlays (Only for Countdown and Buffer) */}
-                {isBuffering && (status === 'playing' || status === 'replay') && (
+                {/* Connection Spinner */}
+                {(isBuffering || !isLoaded) && (status === 'playing' || status === 'replay') && !isDrive && (
                     <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm">
                         <div className="w-12 h-12 border-4 border-[#2D8CFF] border-t-transparent rounded-full animate-spin mb-4"></div>
                         <p className="text-white font-bold opacity-0 animate-in fade-in duration-500">Connecting to Stream...</p>
+                    </div>
+                )}
+
+                {/* Click to Join / Unmute Overlay (For Auto-play policies) */}
+                {status === 'playing' && !isDrive && (unmuteRequired || !isPlaying) && isLoaded && (
+                    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
+                        <button
+                            onClick={() => {
+                                if (innerRef.current) {
+                                    innerRef.current.muted = false;
+                                    setMuted(false);
+                                    setUnmuteRequired(false);
+                                    safePlay(innerRef.current);
+                                }
+                            }}
+                            className="group relative flex items-center gap-4 rounded-full bg-white/10 px-8 py-4 backdrop-blur-md transition-all hover:bg-white/20 hover:scale-105 active:scale-95"
+                        >
+                            <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-[#2D8CFF] shadow-lg shadow-blue-500/30">
+                                <Volume2 className="h-8 w-8 text-white animate-pulse" />
+                                <div className="absolute -inset-1 rounded-full border-2 border-white/20 animate-ping" />
+                            </div>
+                            <div className="text-left">
+                                <p className="text-lg font-bold text-white">Tap to Join Live Class</p>
+                                <p className="text-xs font-medium text-gray-300">Audio Muted by Browser</p>
+                            </div>
+                        </button>
                     </div>
                 )}
 
@@ -261,30 +305,36 @@ const SyncedVideoPlayer = React.forwardRef<any, SyncedVideoPlayerProps>(
                 {!isDrive && status !== "countdown" && status !== "ended" && (
                     <div className="absolute inset-0 z-20 flex flex-col justify-end p-4 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                         <div className="w-full flex flex-col gap-2 pointer-events-auto bg-black/60 backdrop-blur-md p-4 rounded-xl border border-white/10">
-                            <div className="flex flex-col gap-1">
-                                <input
-                                    type="range"
-                                    min="0"
-                                    max={duration || videoDuration || 0}
-                                    step="0.1"
-                                    value={currentTime}
-                                    disabled={status !== "replay"}
-                                    onChange={(e) => {
-                                        const val = parseFloat(e.target.value);
-                                        if (innerRef.current) innerRef.current.currentTime = val;
-                                        setCurrentTime(val);
-                                    }}
-                                    className={cn(
-                                        "w-full h-1 rounded-full accent-[#2D8CFF] bg-white/20 cursor-pointer appearance-none transition-all",
-                                        status === "replay" ? "hover:h-2" : "cursor-not-allowed opacity-50"
-                                    )}
-                                />
-                                <div className="flex justify-between text-[10px] text-gray-300 font-mono">
-                                    <span>{formatTime(currentTime)}</span>
-                                    {status === 'playing' && <span className="text-red-500 font-black animate-pulse">● LIVE</span>}
-                                    <span>{formatTime(duration || videoDuration)}</span>
+                            {status === "replay" && (
+                                <div className="flex flex-col gap-1">
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max={duration || videoDuration || 0}
+                                        step="0.1"
+                                        value={currentTime}
+                                        disabled={status !== "replay"}
+                                        onChange={(e) => {
+                                            const val = parseFloat(e.target.value);
+                                            if (innerRef.current) innerRef.current.currentTime = val;
+                                            setCurrentTime(val);
+                                        }}
+                                        className={cn(
+                                            "w-full h-1 rounded-full accent-[#2D8CFF] bg-white/20 cursor-pointer appearance-none transition-all",
+                                            status === "replay" ? "hover:h-2" : "cursor-not-allowed opacity-50"
+                                        )}
+                                    />
+                                    <div className="flex justify-between text-[10px] text-gray-300 font-mono">
+                                        <span>{formatTime(currentTime)}</span>
+                                        <span>{formatTime(duration || videoDuration)}</span>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
+                            {status === 'playing' && (
+                                <div className="w-full h-1 rounded-full bg-white/20 overflow-hidden mb-2">
+                                    <div className="h-full bg-red-500 w-full animate-pulse" />
+                                </div>
+                            )}
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-4">
                                     {/* Play/Pause Button - Only in Replay Mode */}

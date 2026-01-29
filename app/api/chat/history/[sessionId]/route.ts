@@ -11,7 +11,7 @@ interface RouteContext {
 
 const handler = async (req: NextRequest, user: UserPayload, context: RouteContext) => {
     try {
-        const sessionId = context.params.sessionId;
+        const { sessionId } = await context.params;
         const searchParams = req.nextUrl.searchParams;
         const limit = parseInt(searchParams.get('limit') || '50');
 

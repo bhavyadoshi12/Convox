@@ -359,8 +359,17 @@ export default function JoinSessionPage() {
                 </div>
 
                 <div className="flex flex-1 justify-end">
-                    <button className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 transition-colors">
-                        <Maximize2 className="h-5 w-5" />
+                    <button
+                        onClick={async () => {
+                            if (!document.fullscreenElement) {
+                                await document.documentElement.requestFullscreen();
+                            } else {
+                                if (document.exitFullscreen) await document.exitFullscreen();
+                            }
+                        }}
+                        className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 transition-colors"
+                    >
+                        {!!document.fullscreenElement ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
                     </button>
                 </div>
             </div>

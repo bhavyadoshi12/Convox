@@ -127,9 +127,6 @@ export default function LoginPage() {
                             <label className="block text-sm font-medium text-zinc-700">
                                 Password
                             </label>
-                            <Link href="#" className="text-xs font-semibold text-[#2D8CFF] hover:underline">
-                                Forgot password?
-                            </Link>
                         </div>
                         <div className="relative group">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400 group-focus-within:text-[#2D8CFF] transition-colors">
