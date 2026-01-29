@@ -496,14 +496,12 @@ export default function JoinSessionClient({ sessionId }: JoinSessionClientProps)
                         "h-1/2 lg:h-full lg:flex-[0.3]",
                         "absolute bottom-0 lg:static lg:relative"
                     )}>
-                        <div className="flex-1 overflow-hidden relative">
+                        <div className="flex-1 relative flex flex-col">
                             <StudentChatPanel
                                 sessionId={session.sessionId || session.session_id}
                                 currentUserEmail={userEmail}
                                 currentUserId={userId}
-                                currentUserRole={isGuestLogin ? 'guest' : (userEmail ? (userEmail.includes('admin') ? 'admin' : 'student') : 'guest')} // Simplification: pass actual role from token
-                                // Wait, I have `payload.role` in `useEffect`. I should store it in state.
-                                // Let's add `userRole` state.
+                                currentUserRole={userRole} // Correctly pass the state derived from token
                                 messages={messages}
                                 loading={chatLoading}
                             />

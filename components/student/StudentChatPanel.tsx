@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Send, Users, MessageSquare, Trash2 } from 'lucide-react';
+import { Send, Users, MessageSquare, Trash2, Smile } from 'lucide-react';
+import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
 import { cn } from '@/lib/utils';
 import { getPusherClient } from '@/lib/pusher-client';
 import ChatMessage from './ChatMessage';
@@ -30,6 +31,9 @@ export default function StudentChatPanel({ sessionId, currentUserEmail, currentU
     const [sending, setSending] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
     const [localMessages, setLocalMessages] = useState<ChatMessage[]>([]); // manage messages locally to handle deletes
+
+    // Emoji State
+    const [showEmoji, setShowEmoji] = useState(false);
 
     useEffect(() => {
         setLocalMessages(initialMessages);
@@ -77,6 +81,7 @@ export default function StudentChatPanel({ sessionId, currentUserEmail, currentU
             const data = await response.json();
             if (data.success) {
                 setInputValue('');
+                setShowEmoji(false);
             } else {
                 console.error('Message failed:', data.message);
             }
@@ -108,8 +113,14 @@ export default function StudentChatPanel({ sessionId, currentUserEmail, currentU
         }
     };
 
+    const onEmojiClick = (emojiData: EmojiClickData) => {
+        setInputValue(prev => prev + emojiData.emoji);
+        // Don't close immediately allow multiple
+        // setShowEmoji(false); 
+    };
+
     return (
-        <div className="flex flex-col h-full bg-white border-l border-gray-100 shadow-xl overflow-hidden">
+        <div className="flex flex-col h-full bg-white border-l border-gray-100 shadow-xl">
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b">
                 <h3 className="flex items-center gap-2 font-bold text-gray-900">
@@ -121,6 +132,7 @@ export default function StudentChatPanel({ sessionId, currentUserEmail, currentU
             <div
                 ref={scrollRef}
                 className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth custom-scrollbar"
+                onClick={() => setShowEmoji(false)} // Close emoji on outside click
             >
                 {loading ? (
                     <div className="flex flex-col items-center justify-center h-full text-zinc-400 space-y-3">
@@ -158,17 +170,33 @@ export default function StudentChatPanel({ sessionId, currentUserEmail, currentU
             </div>
 
             {/* Input Area */}
-            <div className="p-4 border-t bg-gray-50/50">
+            <div className="p-4 border-t bg-gray-50/50 relative">
+                {showEmoji && (
+                    <div className="absolute bottom-16 left-4 z-50 shadow-2xl rounded-xl">
+                        <EmojiPicker onEmojiClick={onEmojiClick} width={300} height={400} lazyLoadEmojis={true} />
+                    </div>
+                )}
                 <form
                     onSubmit={handleSendMessage}
-                    className="relative"
+                    className="relative flex items-center gap-2"
                 >
+                    <button
+                        type="button"
+                        onClick={() => setShowEmoji(!showEmoji)}
+                        className={cn(
+                            "p-2 transition-colors rounded-full hover:bg-gray-100",
+                            showEmoji ? "text-[#2D8CFF] bg-blue-50" : "text-gray-400 hover:text-[#2D8CFF]"
+                        )}
+                    >
+                        <Smile className="h-6 w-6" />
+                    </button>
                     <input
                         type="text"
                         placeholder="Say something nice..."
                         className="w-full rounded-full border border-gray-200 bg-white py-3 pl-5 pr-14 text-sm focus:border-[#2D8CFF] focus:outline-none focus:ring-4 focus:ring-blue-50 transition-all shadow-inner"
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
+                        onFocus={() => setShowEmoji(false)}
                     />
                     <button
                         type="submit"
@@ -182,4 +210,3 @@ export default function StudentChatPanel({ sessionId, currentUserEmail, currentU
         </div >
     );
 }
-

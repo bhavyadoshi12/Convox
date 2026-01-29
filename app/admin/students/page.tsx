@@ -10,6 +10,7 @@ interface Student {
     email: string;
     role: string;
     created_at: string;
+    avatar_url?: string;
 }
 
 export default function StudentsPage() {
@@ -90,13 +91,26 @@ export default function StudentsPage() {
                                                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-600 font-bold">
                                                     {student.name.charAt(0).toUpperCase()}
                                                 </div>
-                                                <span className="font-bold text-gray-900">{student.name}</span>
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-gray-900">{student.name}</span>
+                                                    {(student.email.endsWith('@temp.guest') || student.avatar_url?.includes('is_guest=true')) ? (
+                                                        <span className="inline-flex w-fit items-center rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-800">
+                                                            Guest
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex w-fit items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
+                                                            Registered
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
                                                 <Mail className="h-4 w-4 text-gray-400" />
-                                                <span>{student.email}</span>
+                                                <span className={cn(student.email.endsWith('@temp.guest') && "italic text-gray-400")}>
+                                                    {student.email}
+                                                </span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">

@@ -7,7 +7,7 @@ const handler = async (req: NextRequest, user: UserPayload) => {
     try {
         const { data: students, error } = await supabase
             .from('users')
-            .select('id, name, email, role, created_at')
+            .select('id, name, email, role, created_at, avatar_url')
             .eq('role', 'student')
             .order('created_at', { ascending: false });
 

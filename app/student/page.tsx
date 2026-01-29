@@ -244,26 +244,28 @@ export default function StudentDashboard() {
 }
 
 function SessionCard({ session, virtualStatus }: { session: Session; virtualStatus: 'scheduled' | 'live' | 'ended' }) {
-    // Helper to calculate time left initial value
-    const getInitialTimeLeft = () => {
+    const calculateTimeLeft = useCallback(() => {
         const now = new Date().getTime();
         const start = new Date(session.scheduled_start).getTime();
         const diff = start - now;
-        if (diff <= 0) return '';
+
+        if (diff <= 0) return null;
+
         const days = Math.floor(diff / (1000 * 60 * 60 * 24));
         const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
         const parts = [];
         if (days > 0) parts.push(`${days}d`);
         if (hours > 0) parts.push(`${hours}h`);
         parts.push(`${minutes}m`);
         parts.push(`${seconds}s`);
-        return parts.join(' ');
-    };
 
-    const [timeLeft, setTimeLeft] = useState(getInitialTimeLeft());
-    const [isHovered, setIsHovered] = useState(false);
+        return parts.join(' ');
+    }, [session.scheduled_start]);
+
+    const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
     const [localStatus, setLocalStatus] = useState(virtualStatus);
 
     // Sync local status when parent recalculates
@@ -290,25 +292,14 @@ function SessionCard({ session, virtualStatus }: { session: Session; virtualStat
                 return;
             }
 
-            const diff = start - now;
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-            const parts = [];
-            if (days > 0) parts.push(`${days}d`);
-            if (hours > 0) parts.push(`${hours}h`);
-            parts.push(`${minutes}m`);
-            parts.push(`${seconds}s`);
-
-            setTimeLeft(parts.join(' '));
+            // Update countdown
+            setTimeLeft(calculateTimeLeft());
         };
 
         updateTimer();
         const interval = setInterval(updateTimer, 1000);
         return () => clearInterval(interval);
-    }, [session.scheduled_start, session.status, session.video_id?.duration]);
+    }, [session.scheduled_start, session.status, session.video_id?.duration, localStatus, calculateTimeLeft]);
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -331,8 +322,6 @@ function SessionCard({ session, virtualStatus }: { session: Session; virtualStat
     return (
         <div
             className="group relative bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
         >
             {/* Thumbnail */}
             <div className="relative h-48 bg-gray-200 overflow-hidden">
@@ -353,12 +342,14 @@ function SessionCard({ session, virtualStatus }: { session: Session; virtualStat
                     {localStatus.toUpperCase()}
                 </div>
 
-                {/* Countdown Overlay */}
+                {/* Countdown Overlay - ALWAYS VISIBLE for Scheduled */}
                 {localStatus === 'scheduled' && (
-                    <div className={`absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
-                        <div className="text-center">
-                            <p className="text-gray-200 text-xs font-medium uppercase tracking-widest mb-1">Starts In</p>
-                            <p className="text-white text-2xl font-bold font-mono tracking-tight">{timeLeft || 'Loading...'}</p>
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center">
+                        <div className="text-center bg-black/60 p-3 rounded-xl border border-white/10 shadow-2xl">
+                            <p className="text-gray-300 text-[10px] font-bold uppercase tracking-widest mb-1">Starts In</p>
+                            <p className="text-white text-xl font-bold font-mono tracking-tight tabular-nums">
+                                {timeLeft || <span className="animate-pulse">Loading...</span>}
+                            </p>
                         </div>
                     </div>
                 )}

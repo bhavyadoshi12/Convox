@@ -196,10 +196,11 @@ const SyncedVideoPlayer = React.forwardRef<any, SyncedVideoPlayerProps>(
                 setIsLoaded(true);
                 setIsBuffering(false);
                 if (status === "playing" || status === "replay") {
-                    const elapsed = (Date.now() - new Date(scheduledStart).getTime()) / 1000;
+                    // Fix: Do NOT auto-seek to scheduled time. Wait for Admin sync or start at 0.
+                    // const elapsed = (Date.now() - new Date(scheduledStart).getTime()) / 1000;
+                    // if (status === "playing") video.currentTime = elapsed;
 
-                    // Initial Seek
-                    if (status === "playing") video.currentTime = elapsed;
+                    // Start at 0 or current pos
                     safePlay(video);
                 }
             };
@@ -209,14 +210,17 @@ const SyncedVideoPlayer = React.forwardRef<any, SyncedVideoPlayerProps>(
                 setIsPlaying(true);
                 playingRef.current = true;
 
-                // Aggressive Sync Check on Play
+                // Removed Aggressive Sync to prevent jumping to "scheduled time"
+                // Now relies on Admin broadcast for sync
+                /*
                 if (status === 'playing') {
                     const expectedTime = (Date.now() - new Date(scheduledStart).getTime()) / 1000;
                     if (Math.abs(video.currentTime - expectedTime) > 3) {
-                        console.log("Aggressive Sync: Drifting detected, seeking to", expectedTime);
-                        video.currentTime = expectedTime;
+                         console.log("Aggressive Sync: Drifting detected, seeking to", expectedTime);
+                         video.currentTime = expectedTime;
                     }
                 }
+                */
             };
             const onPause = () => { setIsPlaying(false); playingRef.current = false; };
             const onTimeUpdate = () => setCurrentTime(video.currentTime);
