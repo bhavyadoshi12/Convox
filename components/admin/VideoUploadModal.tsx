@@ -53,11 +53,11 @@ export default function VideoUploadModal({ isOpen, onClose, onSuccess }: VideoUp
     const validateAndSetFile = (selectedFile?: File) => {
         if (!selectedFile) return;
 
-        const validTypes = ['video/mp4', 'video/quicktime', 'video/x-msvideo']; // mp4, mov, avi
+        const validTypes = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska', 'video/mkv']; // mp4, mov, avi, mkv
         const maxSize = 2000 * 1024 * 1024; // 2GB (Direct Upload Limit)
 
         if (!validTypes.includes(selectedFile.type)) {
-            setError('Invalid file type. Please upload MP4, MOV, or AVI.');
+            setError('Invalid file type. Please upload MP4, MOV, AVI, or MKV.');
             return;
         }
 
@@ -397,13 +397,13 @@ export default function VideoUploadModal({ isOpen, onClose, onSuccess }: VideoUp
                                         className="hidden"
                                         ref={fileInputRef}
                                         onChange={handleFileChange}
-                                        accept="video/mp4,video/quicktime,video/x-msvideo"
+                                        accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,video/mkv"
                                     />
                                     <div className="mb-4 rounded-full bg-white p-4 shadow-sm group-hover:scale-110 transition-transform">
                                         <Upload className="h-8 w-8 text-[#2D8CFF]" />
                                     </div>
                                     <p className="mb-1 font-semibold text-gray-900">Click to upload or drag and drop</p>
-                                    <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">MP4, MOV, or AVI (Max 100MB)</p>
+                                    <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">MP4, MOV, AVI, or MKV (Max 100MB)</p>
                                 </div>
                             )}
 
