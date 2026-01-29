@@ -10,6 +10,7 @@ const sidebarItems = [
     { icon: Home, label: 'Dashboard', href: '/admin/dashboard' },
     { icon: Video, label: 'Videos', href: '/admin/videos' },
     { icon: Calendar, label: 'Sessions', href: '/admin/sessions' },
+    { icon: Users, label: 'Students', href: '/admin/students' },
     { icon: Users, label: 'Admins', href: '/admin/admins' },
     { icon: Settings, label: 'Settings', href: '/admin/settings' },
 ];

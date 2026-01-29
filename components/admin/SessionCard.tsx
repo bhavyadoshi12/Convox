@@ -1,5 +1,5 @@
 import React, { memo, useMemo } from 'react';
-import { Calendar, Clock, Video, Activity, Play, Edit, Trash2, MoreVertical } from 'lucide-react';
+import { Calendar, Clock, Video, Activity, Play, Edit, Trash2, MoreVertical, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -114,6 +114,20 @@ const SessionCard = ({ session, onDelete, onEdit }: SessionCardProps) => {
                     <Play className="h-3 w-3" />
                     {session.status === 'live' ? 'View Live' : 'Manage Session'}
                 </Link>
+                <button
+                    onClick={() => {
+                        const link = `${window.location.origin}/join/${session.sessionId || session.id}`;
+                        // Simplified format for better compatibility and "tap to link" behavior
+                        const message = `🚀 Join Live Session on ZoomStream Sync\n\nTopic: ${session.title}\nWhen: ${formattedDate} at ${formattedTime}\n\nJoin Here:\n${link}\n\nSee you there!`;
+
+                        navigator.clipboard.writeText(message);
+                        alert("Invitation copied to clipboard!");
+                    }}
+                    className="flex items-center justify-center rounded-lg border border-gray-200 bg-white px-3 text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 active:bg-gray-100"
+                    title="Copy Join Link"
+                >
+                    <Copy className="h-4 w-4" />
+                </button>
             </div>
         </div>
     );

@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
         const presenceData = {
             user_id: userData.id,
             user_info: {
-                name: userData.email?.split('@')[0] || 'User',
+                name: userData.name || userData.email?.split('@')[0] || 'User',
                 email: userData.email,
                 role: userData.role
             }

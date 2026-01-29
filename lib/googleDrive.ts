@@ -13,10 +13,12 @@
 export function extractDriveFileId(url: string): string | null {
     if (!url) return null;
 
+    // Handle generic cases and valid ID characters (alphanumeric, -, _)
     const regexes = [
-        /\/file\/d\/([a-zA-Z0-9_-]+)/,
-        /id=([a-zA-Z0-9_-]+)/,
-        /\/d\/([a-zA-Z0-9_-]+)/
+        /\/file\/d\/([a-zA-Z0-9_-]+)/, // Standard /file/d/ID
+        /id=([a-zA-Z0-9_-]+)/,         // ?id=ID
+        /\/d\/([a-zA-Z0-9_-]+)/,       // Short /d/ID
+        /^([a-zA-Z0-9_-]+)$/           // Direct ID input
     ];
 
     for (const regex of regexes) {
@@ -51,8 +53,9 @@ export function generateThumbnailLink(fileId: string): string {
 }
 
 /**
- * Validates a Google Drive link and checks if it's publicly accessible.
- * Note: This is a basic check. Real validation might require a server-side HEAD request.
+ * Validates a Google Drive link.
+ * We trust the ID extraction primarily. The fetch check is optional/best-effort
+ * because CORS often blocks client-side checks for Drive links.
  */
 export async function validateDriveLink(url: string): Promise<{ isValid: boolean; fileId: string | null; error?: string }> {
     const fileId = extractDriveFileId(url);
@@ -61,16 +64,8 @@ export async function validateDriveLink(url: string): Promise<{ isValid: boolean
         return { isValid: false, fileId: null, error: "Invalid Google Drive URL" };
     }
 
-    try {
-        // We attempt to fetch the thumbnail as a way to check accessibility without needing API keys
-        const thumbUrl = generateThumbnailLink(fileId);
-        const response = await fetch(thumbUrl, { mode: 'no-cors' }); // no-cors for client-side check
-
-        // Note: fetch with no-cors doesn't give us status code, but we can't do much more client-side
-        // without a proxy or backend. For now, we trust the ID extraction and regex.
-
-        return { isValid: true, fileId };
-    } catch (error) {
-        return { isValid: false, fileId, error: "Link might not be public" };
-    }
+    // We used to try fetching the thumbnail, but CORS issues often cause false negatives.
+    // For now, if we extracted an ID, we assume it's a valid link format.
+    // The VideoPlayer will handle playback errors if the file is private.
+    return { isValid: true, fileId };
 }

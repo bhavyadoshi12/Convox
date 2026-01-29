@@ -88,4 +88,4 @@ const handler = async (req: NextRequest, user: UserPayload) => {
     }
 };
 
-export const GET = requireAuth(handler, ['student', 'admin']);
+export const GET = requireAuth(handler, ['student', 'admin', 'guest']);

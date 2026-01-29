@@ -6,13 +6,14 @@ const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
 
 export interface UserPayload {
     id: string;
-    role: 'admin' | 'student';
+    role: 'admin' | 'student' | 'guest';
     email?: string;
+    name?: string; // Add name for guests
 }
 
 // Generate JWT Token
-export const generateToken = (userId: string, email: string, role: 'admin' | 'student'): string => {
-    return jwt.sign({ id: userId, email, role }, JWT_SECRET, {
+export const generateToken = (userId: string, email: string, role: 'admin' | 'student' | 'guest', name?: string): string => {
+    return jwt.sign({ id: userId, email, role, name }, JWT_SECRET, {
         expiresIn: '7d',
     });
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Users,
     Mic,
@@ -11,7 +11,9 @@ import {
     Maximize2,
     Minimize2,
     ShieldCheck,
-    ChevronLeft
+    ChevronLeft,
+    Copy,
+    Check
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import SyncedVideoPlayer from '@/components/student/SyncedVideoPlayer';
@@ -19,6 +21,8 @@ import AdminMessageTrigger from '@/components/student/AdminMessageTrigger';
 import StudentChatPanel from '@/components/student/StudentChatPanel';
 import ParticipantCount from '@/components/student/ParticipantCount';
 import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
+import { getPusherClient } from '@/lib/pusher-client';
 
 interface SessionData {
     _id: string;
@@ -37,9 +41,6 @@ interface SessionData {
     };
 }
 
-import { useParams } from 'next/navigation';
-import { getPusherClient } from '@/lib/pusher-client';
-
 interface ChatMessage {
     id?: string;
     sender: string;
@@ -52,6 +53,7 @@ interface ChatMessage {
 
 export default function JoinSessionPage() {
     const params = useParams();
+    const router = useRouter();
     const sessionId = params.sessionId as string;
 
     const [session, setSession] = useState<SessionData | null>(null);
@@ -59,6 +61,13 @@ export default function JoinSessionPage() {
     const [error, setError] = useState<string | null>(null);
     const [userEmail, setUserEmail] = useState('');
     const [userId, setUserId] = useState('');
+    const [userName, setUserName] = useState('');
+
+    // Guest Auth State
+    const [isGuestLogin, setIsGuestLogin] = useState(false);
+    const [guestNameInput, setGuestNameInput] = useState('');
+    const [guestEmailInput, setGuestEmailInput] = useState('');
+    const [guestLoading, setGuestLoading] = useState(false);
 
     // Chat State
     const [isChatOpen, setIsChatOpen] = useState(false);
@@ -72,56 +81,145 @@ export default function JoinSessionPage() {
     const [playerStatus, setPlayerStatus] = useState<string>('countdown'); // Local player state
     const playerRef = React.useRef<any>(null);
 
-    // Fetch Session
+    // Share State
+    const [isCopied, setIsCopied] = useState(false);
+
+    // 1. Auth Check & Fetch Session
     useEffect(() => {
-        const fetchSession = async () => {
+        const checkAuthAndFetch = async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setIsGuestLogin(true);
+                setLoading(false);
+                return;
+            }
+
             try {
-                const token = localStorage.getItem('token');
-                if (token) {
-                    const payload = JSON.parse(atob(token.split('.')[1]));
-                    setUserEmail(payload.email || 'Student');
-                    setUserId(payload.id || '');
-                }
+                // Decode token to get user info locally
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const payload = JSON.parse(window.atob(base64));
+                setUserEmail(payload.email || '');
+                setUserId(payload.id || '');
+                setUserName(payload.name || payload.email?.split('@')[0] || 'Student');
 
-                const response = await fetch(`/api/student/sessions?limit=100`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await response.json();
-
-                if (data.success) {
-                    const found = data.sessions.find((s: any) =>
-                        s.sessionId === sessionId ||
-                        s.session_id === sessionId ||
-                        s._id === sessionId
-                    );
-                    if (found) {
-                        setSession(found);
-                    } else {
-                        setError('Session not found or not currently active.');
-                    }
-                }
+                // Now fetch session
+                await fetchSessionData(token);
             } catch (err) {
-                console.error('Fetch session failed:', err);
-                setError('Failed to load session. Please try again.');
-            } finally {
+                console.error("Invalid token:", err);
+                localStorage.removeItem('token');
+                setIsGuestLogin(true);
                 setLoading(false);
             }
         };
 
-        fetchSession();
+        checkAuthAndFetch();
     }, [sessionId]);
 
-    // Chat Logic: Fetch History & Subscribe
+    const fetchSessionData = async (token: string) => {
+        try {
+            const response = await fetch(`/api/student/sessions?limit=100`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                console.log('Join Page: checking for session', sessionId);
+                console.log('Available sessions:', data.sessions.map((s: any) => ({ id: s.id, session_id: s.session_id, sessionId: s.sessionId })));
+
+                const found = data.sessions.find((s: any) =>
+                    s.sessionId === sessionId ||
+                    s.session_id === sessionId ||
+                    s._id === sessionId ||
+                    s.id === sessionId // Added check for id direct match just in case
+                );
+                if (found) {
+                    console.log('Session found:', found.title);
+                    setSession(found);
+                    setLoading(false);
+                } else {
+                    console.error('Session not found in list');
+                    setError('Session not found or not currently active.');
+                    setLoading(false);
+                }
+            } else {
+                // If API returns auth error, force guest login
+                if (response.status === 401 || response.status === 403) {
+                    localStorage.removeItem('token');
+                    setIsGuestLogin(true);
+                } else {
+                    setError(data.message || 'Failed to load session');
+                }
+                setLoading(false);
+            }
+        } catch (err) {
+            console.error('Fetch session failed:', err);
+            setError('Failed to load session. Please check your connection.');
+            setLoading(false);
+        }
+    };
+
+    const handleGuestLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!guestNameInput.trim() || !guestEmailInput.trim()) return;
+
+        setGuestLoading(true);
+        try {
+            const response = await fetch('/api/auth/guest-login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: guestNameInput,
+                    email: guestEmailInput
+                })
+            });
+            const data = await response.json();
+            if (data.success) {
+                localStorage.setItem('token', data.token);
+                setGuestLoading(false);
+                setIsGuestLogin(false);
+                setLoading(true);
+
+                // Update local state
+                setUserEmail(data.user.email);
+                setUserId(data.user.id);
+                setUserName(data.user.name);
+
+                // Fetch session
+                await fetchSessionData(data.token);
+            } else {
+                alert(data.message || 'Login failed');
+                setGuestLoading(false);
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Something went wrong. Please try again.');
+            setGuestLoading(false);
+        }
+    };
+
+    const handleShare = async () => {
+        try {
+            await navigator.clipboard.writeText(window.location.href);
+            setIsCopied(true);
+            setTimeout(() => setIsCopied(false), 2000);
+        } catch (err) {
+            console.error('Failed to copy', err);
+        }
+    };
+
+    // Chat Logic
     useEffect(() => {
         if (!session) return;
-
-        // Use the SLUG if available for channel subscription to match server trigger
         const targetSessionId = session.sessionId || session.session_id;
 
         const fetchHistory = async () => {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
             try {
                 const response = await fetch(`/api/chat/history/${targetSessionId}`, {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const data = await response.json();
                 if (data.success) {
@@ -141,19 +239,14 @@ export default function JoinSessionPage() {
 
         channel.bind('new-message', (data: ChatMessage) => {
             setMessages(prev => {
-                // Deduplication: Check if ID matches OR (content + sender + time proximity) matches
                 const isDuplicate = prev.some(m =>
                     (m.id && data.id && m.id === data.id) ||
                     (m.message === data.message && m.sender === data.sender && Math.abs(new Date(m.timestamp).getTime() - new Date(data.timestamp).getTime()) < 2000)
                 );
-
                 if (isDuplicate) return prev;
-
-                // If chat is closed, increment unread
-                if (!isChatOpen) {
+                if (!isChatOpenRef.current) {
                     setUnreadCount(c => c + 1);
                 }
-
                 return [...prev, data];
             });
         });
@@ -161,14 +254,8 @@ export default function JoinSessionPage() {
         return () => {
             pusher.unsubscribe(`session-${targetSessionId}`);
         };
-    }, [session, isChatOpen]); // Depend on isChatOpen to capture current state for unread logic? 
-    // Actually, depending on isChatOpen in useEffect will resubscribe on toggle. 
-    // Better to use a ref for isChatOpen or functional update for unreadCount. 
-    // BUT setMessages functional update can't see isChatOpen's current value easily without closure.
-    // WORKAROUND: Use a separate useEffect/ref for unread logic or accept resubscribe (low cost).
-    // Let's use a ref for isChatOpen to avoid resubscribing.
+    }, [session]); // Depend on session only
 
-    // Ref for chat open status to use inside Pusher callback without re-binding
     const isChatOpenRef = React.useRef(isChatOpen);
     useEffect(() => { isChatOpenRef.current = isChatOpen; }, [isChatOpen]);
 
@@ -189,7 +276,61 @@ export default function JoinSessionPage() {
         return (
             <div className="flex h-[calc(100vh-64px)] flex-col items-center justify-center gap-4 bg-gray-50">
                 <div className="h-12 w-12 animate-spin rounded-full border-4 border-[#2D8CFF] border-t-transparent"></div>
-                <p className="font-bold text-gray-500 animate-pulse">Connecting to Live Server...</p>
+                <p className="font-bold text-gray-500 animate-pulse">Connecting to Session...</p>
+            </div>
+        );
+    }
+
+    if (isGuestLogin) {
+        return (
+            <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
+                <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="mb-6 text-center">
+                        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50">
+                            <Users className="h-7 w-7 text-[#2D8CFF]" />
+                        </div>
+                        <h1 className="text-2xl font-bold text-gray-900">Join Session</h1>
+                        <p className="mt-2 text-sm text-gray-500">Enter your name to join as a guest.</p>
+                    </div>
+
+                    <form onSubmit={handleGuestLogin} className="space-y-4">
+                        <div>
+                            <label className="mb-2 block text-sm font-bold text-gray-700">Full Name</label>
+                            <input
+                                type="text"
+                                required
+                                value={guestNameInput}
+                                onChange={(e) => setGuestNameInput(e.target.value)}
+                                placeholder="Student Name"
+                                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-900 placeholder:text-gray-400 focus:border-[#2D8CFF] focus:outline-none focus:ring-4 focus:ring-blue-50"
+                            />
+                        </div>
+                        <div>
+                            <label className="mb-2 block text-sm font-bold text-gray-700">Email Address</label>
+                            <input
+                                type="email"
+                                required
+                                value={guestEmailInput}
+                                onChange={(e) => setGuestEmailInput(e.target.value)}
+                                placeholder="student@example.com"
+                                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-900 placeholder:text-gray-400 focus:border-[#2D8CFF] focus:outline-none focus:ring-4 focus:ring-blue-50"
+                            />
+                        </div>
+                        <button
+                            type="submit"
+                            disabled={guestLoading}
+                            className="mt-2 w-full rounded-xl bg-[#2D8CFF] py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-600 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:grayscale"
+                        >
+                            {guestLoading ? 'Joining...' : 'Join Now'}
+                        </button>
+                    </form>
+
+                    <div className="mt-6 text-center">
+                        <Link href="/login" className="text-xs font-bold text-gray-400 hover:text-[#2D8CFF] transition-colors">
+                            Already have an account? Login here
+                        </Link>
+                    </div>
+                </div>
             </div>
         );
     }
@@ -209,10 +350,6 @@ export default function JoinSessionPage() {
         );
     }
 
-    // Fetch Session... (no change)
-
-    // ... (rest of code)
-
     return (
         <div className="flex h-[calc(100vh-64px)] flex-col bg-gray-50 overflow-hidden">
             {/* Admin Message Trigger (Logic only) */}
@@ -231,7 +368,7 @@ export default function JoinSessionPage() {
                         <Video className="h-4 w-4 text-[#2D8CFF]" />
                         {session.title}
                     </h1>
-                    {/* Badge Logic: Check Player Status First */}
+                    {/* Badge Logic */}
                     {(playerStatus === 'playing' || (session.status === 'live' && playerStatus !== 'ended' && playerStatus !== 'replay')) && (
                         <span className="inline-flex items-center gap-1.5 rounded bg-red-500 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-white shadow-sm">
                             <span className="h-1.5 w-1.5 bg-white rounded-full animate-pulse"></span>
@@ -252,7 +389,7 @@ export default function JoinSessionPage() {
 
             {/* Main Container: Video + Chat */}
             <div className="flex flex-1 flex-col lg:flex-row overflow-hidden">
-                {/* Video Area (Flex grows if chat is closed) */}
+                {/* Video Area */}
                 <div className={cn("flex flex-col bg-black transition-all duration-300", isChatOpen ? "flex-[0.7]" : "flex-1")}>
                     <div className="flex flex-1 items-center justify-center p-0 md:p-4 lg:p-8">
                         <div className="w-full max-w-5xl shadow-2xl shadow-black overflow-hidden rounded-lg">
@@ -296,7 +433,7 @@ export default function JoinSessionPage() {
                 <div className="flex-1"></div>
 
                 <div className="flex items-center gap-2 md:gap-4">
-                    {/* Only show controls if LIVE and not Ended locally */}
+                    {/* Only show controls if LIVE (or scheduled) and not Ended locally */}
                     {(session.status !== 'ended' && session.status !== 'replay' && playerStatus !== 'ended' && playerStatus !== 'replay') && (
                         <>
                             <ControlButton
@@ -315,7 +452,17 @@ export default function JoinSessionPage() {
                                 activeColor="bg-gray-100 text-gray-900"
                                 inactiveColor="bg-red-50 text-red-500"
                             />
-                            <ControlButton icon={Monitor} label="Share" onClick={() => { }} />
+
+                            {/* Share Button */}
+                            <ControlButton
+                                icon={isCopied ? Check : Copy}
+                                label={isCopied ? "Copied!" : "Share Link"}
+                                onClick={handleShare}
+                                isActive={isCopied}
+                                activeColor="bg-green-500 text-white"
+                                inactiveColor="bg-gray-100 text-gray-600"
+                            />
+
                             <ControlButton
                                 icon={Hand}
                                 label="Raise Hand"
@@ -354,7 +501,7 @@ export default function JoinSessionPage() {
                         href="/student"
                         className="ml-4 rounded-lg bg-red-500 px-5 py-2 text-xs font-bold text-white transition-all hover:bg-red-600 active:scale-95"
                     >
-                        Leave
+                        {isGuestLogin ? 'Exit' : 'Leave'}
                     </Link>
                 </div>
 
