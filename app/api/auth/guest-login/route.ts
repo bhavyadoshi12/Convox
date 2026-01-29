@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
                 name,
                 email: email.toLowerCase(),
                 password_hash: passwordHash,
-                role: 'guest',
+                role: 'student', // Workaround: DB has a CHECK constraint allowing only 'student'/'admin'. We use 'student' here but issue a 'guest' token.
                 avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
             })
             .select()
