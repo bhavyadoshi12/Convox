@@ -403,7 +403,7 @@ export default function VideoUploadModal({ isOpen, onClose, onSuccess }: VideoUp
                                         <Upload className="h-8 w-8 text-[#2D8CFF]" />
                                     </div>
                                     <p className="mb-1 font-semibold text-gray-900">Click to upload or drag and drop</p>
-                                    <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">MP4, MOV, or AVI (Max 2GB)</p>
+                                    <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">MP4, MOV, or AVI (Max 100MB)</p>
                                 </div>
                             )}
 
