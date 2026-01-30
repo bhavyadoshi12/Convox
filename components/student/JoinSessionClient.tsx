@@ -443,8 +443,8 @@ export default function JoinSessionClient({ sessionId }: JoinSessionClientProps)
                 />
             )}
 
-            {/* Top Bar */}
-            <div className="flex h-12 shrink-0 items-center justify-between border-b bg-white px-4 shadow-sm z-10">
+            {/* Top Bar - Hidden in Mobile Landscape to save space */}
+            <div className="flex h-12 shrink-0 items-center justify-between border-b bg-white px-4 shadow-sm z-10 landscape:hidden md:landscape:flex">
                 <div className="flex items-center gap-4">
                     <h1 className="flex items-center gap-2 text-sm font-bold text-gray-900">
                         <Video className="h-4 w-4 text-[#2D8CFF]" />
@@ -473,8 +473,8 @@ export default function JoinSessionClient({ sessionId }: JoinSessionClientProps)
             <div className="flex flex-1 flex-col lg:flex-row overflow-hidden relative justify-center">
                 {/* Video Area */}
                 <div className={cn("flex flex-col bg-black transition-all duration-300 w-full lg:w-auto", isChatOpen ? "h-auto md:h-1/2 lg:h-full lg:flex-[0.7]" : "h-auto md:h-full lg:flex-1")}>
-                    <div className="flex flex-1 items-center justify-center p-0 md:p-1 lg:p-2 w-full">
-                        <div className="w-full h-full lg:h-auto max-w-5xl shadow-2xl shadow-black overflow-hidden rounded-lg">
+                    <div className="flex flex-1 items-center justify-center p-0 md:p-1 lg:p-2 w-full max-h-[calc(100dvh-3.5rem)] landscape:max-h-[100dvh] md:landscape:max-h-full">
+                        <div className="w-full h-auto max-w-5xl shadow-2xl shadow-black overflow-hidden rounded-lg mx-auto landscape:w-auto landscape:h-full landscape:aspect-video md:landscape:w-full md:landscape:h-auto">
                             <SyncedVideoPlayer
                                 ref={playerRef}
                                 sessionId={session.sessionId || session.session_id}
