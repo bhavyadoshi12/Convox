@@ -470,7 +470,7 @@ export default function JoinSessionClient({ sessionId }: JoinSessionClientProps)
             </div>
 
             {/* Main Container: Video + Chat */}
-            <div className="flex flex-1 flex-col lg:flex-row overflow-hidden relative">
+            <div className="flex flex-1 flex-col lg:flex-row overflow-hidden relative justify-center">
                 {/* Video Area */}
                 <div className={cn("flex flex-col bg-black transition-all duration-300 w-full lg:w-auto", isChatOpen ? "h-auto md:h-1/2 lg:h-full lg:flex-[0.7]" : "h-auto md:h-full lg:flex-1")}>
                     <div className="flex flex-1 items-center justify-center p-0 md:p-1 lg:p-2 w-full">
@@ -484,6 +484,7 @@ export default function JoinSessionClient({ sessionId }: JoinSessionClientProps)
                                 thumbnailUrl={session.video_id?.thumbnail_url}
                                 scheduledStart={session.scheduled_start}
                                 videoDuration={session.video_id?.duration || 0}
+                                initialStatus={playerStatus as "countdown" | "playing" | "ended" | "replay"}
                                 onStatusChange={(status) => setPlayerStatus(status)}
                             />
                         </div>

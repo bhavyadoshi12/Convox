@@ -16,13 +16,14 @@ interface SyncedVideoPlayerProps {
     thumbnailUrl?: string;
     scheduledStart: string | Date;
     videoDuration?: number;
+    initialStatus?: "countdown" | "playing" | "ended" | "replay";
     onStatusChange?: (status: "countdown" | "playing" | "ended" | "replay") => void;
 }
 
 const SyncedVideoPlayer = React.forwardRef<any, SyncedVideoPlayerProps>(
-    ({ sessionId, videoUrl, videoSource, driveFileId, thumbnailUrl, scheduledStart, videoDuration = 0, onStatusChange }, ref) => {
+    ({ sessionId, videoUrl, videoSource, driveFileId, thumbnailUrl, scheduledStart, videoDuration = 0, initialStatus, onStatusChange }, ref) => {
         const [status, setStatus] = useState<"countdown" | "playing" | "ended" | "replay">(
-            "countdown"
+            initialStatus || "countdown"
         );
 
         // Notify parent whenever status changes
