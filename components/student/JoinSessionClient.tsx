@@ -444,7 +444,7 @@ export default function JoinSessionClient({ sessionId }: JoinSessionClientProps)
             )}
 
             {/* Top Bar */}
-            <div className="flex h-14 shrink-0 items-center justify-between border-b bg-white px-6 shadow-sm z-10">
+            <div className="flex h-12 shrink-0 items-center justify-between border-b bg-white px-4 shadow-sm z-10">
                 <div className="flex items-center gap-4">
                     <h1 className="flex items-center gap-2 text-sm font-bold text-gray-900">
                         <Video className="h-4 w-4 text-[#2D8CFF]" />
@@ -472,8 +472,8 @@ export default function JoinSessionClient({ sessionId }: JoinSessionClientProps)
             {/* Main Container: Video + Chat */}
             <div className="flex flex-1 flex-col lg:flex-row overflow-hidden relative">
                 {/* Video Area */}
-                <div className={cn("flex flex-col bg-black transition-all duration-300 w-full lg:w-auto", isChatOpen ? "h-1/2 lg:h-full lg:flex-[0.7]" : "h-full lg:flex-1")}>
-                    <div className="flex flex-1 items-center justify-center p-0 md:p-4 lg:p-8 h-full">
+                <div className={cn("flex flex-col bg-black transition-all duration-300 w-full lg:w-auto", isChatOpen ? "h-auto md:h-1/2 lg:h-full lg:flex-[0.7]" : "h-auto md:h-full lg:flex-1")}>
+                    <div className="flex flex-1 items-center justify-center p-0 md:p-1 lg:p-2 w-full">
                         <div className="w-full h-full lg:h-auto max-w-5xl shadow-2xl shadow-black overflow-hidden rounded-lg">
                             <SyncedVideoPlayer
                                 ref={playerRef}
@@ -518,7 +518,7 @@ export default function JoinSessionClient({ sessionId }: JoinSessionClientProps)
             </div>
 
             {/* Bottom Bar: Action Icons */}
-            <div className="flex min-h-[4rem] h-auto shrink-0 items-center justify-between border-t bg-white px-2 md:px-8 py-2 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-10 overflow-x-auto no-scrollbar">
+            <div className="flex min-h-[3.5rem] h-auto shrink-0 items-center justify-between border-t bg-white px-2 md:px-4 py-1 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-10 overflow-x-auto no-scrollbar">
                 <div className="hidden md:flex flex-1"></div>
 
                 <div className="flex w-full md:w-auto items-center justify-center gap-2 md:gap-4">
@@ -582,23 +582,23 @@ export default function JoinSessionClient({ sessionId }: JoinSessionClientProps)
                             <button
                                 onClick={() => setIsChatOpen(!isChatOpen)}
                                 className={cn(
-                                    "group flex flex-col items-center gap-1 rounded-xl p-2 transition-all active:scale-90 relative",
+                                    "group flex flex-col items-center gap-0.5 rounded-lg p-1 transition-all active:scale-90 relative",
                                     isChatOpen ? "bg-blue-50" : "hover:bg-gray-50"
                                 )}
                             >
                                 <div className={cn(
-                                    "flex h-10 w-10 items-center justify-center rounded-xl transition-all relative", // Standardized size for mobile/desktop
+                                    "flex h-8 w-8 items-center justify-center rounded-lg transition-all relative", // Compact size
                                     isChatOpen ? "bg-[#2D8CFF] text-white shadow-md" : "bg-gray-100 text-gray-600 group-hover:bg-white group-hover:shadow-md"
                                 )}>
-                                    <Users className="h-5 w-5" />
+                                    <Users className="h-4 w-4" />
                                     {unreadCount > 0 && !isChatOpen && (
-                                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm animate-bounce">
+                                        <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white shadow-sm animate-bounce">
                                             {unreadCount}
                                         </span>
                                     )}
                                 </div>
                                 <span className={cn(
-                                    "text-[10px] font-bold uppercase tracking-tighter whitespace-nowrap",
+                                    "text-[9px] font-bold uppercase tracking-tighter whitespace-nowrap",
                                     isChatOpen ? "text-[#2D8CFF]" : "text-gray-400 group-hover:text-gray-600"
                                 )}>Chat</span>
                             </button>
@@ -607,11 +607,11 @@ export default function JoinSessionClient({ sessionId }: JoinSessionClientProps)
 
                     <Link
                         href={userRole === 'admin' ? `/admin/sessions/${sessionId}` : '/student'}
-                        className="ml-2 md:ml-4 flex flex-col items-center justify-center gap-1 w-14 rounded-xl p-1 text-[10px] font-bold text-red-500 hover:bg-red-50 transition-all active:scale-95 whitespace-nowrap"
+                        className="ml-2 md:ml-4 flex flex-col items-center justify-center gap-0.5 w-12 rounded-lg p-1 text-[9px] font-bold text-red-500 hover:bg-red-50 transition-all active:scale-95 whitespace-nowrap"
                         title={isGuestLogin ? 'Exit Session' : 'Leave Session'}
                     >
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 border border-red-100">
-                            <LogOut className="h-5 w-5 text-red-500" />
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 border border-red-100">
+                            <LogOut className="h-4 w-4 text-red-500" />
                         </div>
                         <span className="uppercase tracking-tighter">{isGuestLogin ? 'Exit' : 'Leave'}</span>
                     </Link>
@@ -656,17 +656,17 @@ function ControlButton({
     return (
         <button
             onClick={onClick}
-            className="group flex flex-col items-center gap-1 rounded-xl p-2 transition-all active:scale-90"
+            className="group flex flex-col items-center gap-0.5 rounded-lg p-1 transition-all active:scale-90"
         >
             <div className={cn(
-                "flex h-10 w-10 items-center justify-center rounded-xl transition-all group-hover:shadow-md",
+                "flex h-8 w-8 items-center justify-center rounded-lg transition-all group-hover:shadow-md",
                 isActive ? activeColor : inactiveColor,
                 !isActive && "group-hover:bg-white"
             )}>
-                <Icon className="h-5 w-5" />
+                <Icon className="h-4 w-4" />
             </div>
             <span className={cn(
-                "text-[10px] font-bold uppercase tracking-tighter",
+                "text-[9px] font-bold uppercase tracking-tighter",
                 isActive ? "text-[#2D8CFF]" : "text-gray-400 group-hover:text-gray-600"
             )}>{label}</span>
         </button>

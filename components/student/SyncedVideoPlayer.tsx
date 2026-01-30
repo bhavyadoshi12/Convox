@@ -46,6 +46,33 @@ const SyncedVideoPlayer = React.forwardRef<any, SyncedVideoPlayerProps>(
         const playAttemptRef = useRef<number>(0);
         const playingRef = useRef(false);
 
+        // Mobile Controls State
+        const [showControls, setShowControls] = useState(false);
+        const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+        const handleInteraction = () => {
+            setShowControls(true);
+            if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+
+            if (status === 'playing' || status === 'replay') {
+                controlsTimeoutRef.current = setTimeout(() => {
+                    setShowControls(false);
+                }, 3000); // Auto-hide after 3 seconds
+            }
+        };
+
+        const toggleControls = (e: React.MouseEvent) => {
+            // Don't toggle if clicking on controls themselves
+            if ((e.target as HTMLElement).closest('button') || (e.target as HTMLElement).closest('input')) return;
+
+            if (showControls) {
+                setShowControls(false);
+                if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+            } else {
+                handleInteraction();
+            }
+        };
+
         // Determine if we should use iframe (Google Drive) or native video (Supabase)
         const isDrive = videoSource === 'google_drive';
 
@@ -289,6 +316,9 @@ const SyncedVideoPlayer = React.forwardRef<any, SyncedVideoPlayerProps>(
         return (
             <div
                 ref={containerRef}
+                onClick={toggleControls}
+                onMouseMove={handleInteraction}
+                onMouseLeave={() => setShowControls(false)}
                 className={cn(
                     "relative w-full overflow-hidden bg-black shadow-2xl group rounded-2xl border border-white/5",
                     (status === "countdown" || status === "ended") ? "aspect-[9/16] md:aspect-video h-full object-cover" : "aspect-video"
@@ -382,7 +412,10 @@ const SyncedVideoPlayer = React.forwardRef<any, SyncedVideoPlayerProps>(
 
                 {/* Custom Controls (Only for Native Video - Supabase) */}
                 {!isDrive && status !== "countdown" && status !== "ended" && (
-                    <div className="absolute inset-0 z-20 flex flex-col justify-end p-4 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    <div className={cn(
+                        "absolute inset-0 z-20 flex flex-col justify-end p-4 transition-opacity duration-300 pointer-events-none",
+                        showControls ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                    )}>
                         <div className="w-full flex flex-col gap-2 pointer-events-auto bg-black/60 backdrop-blur-md p-4 rounded-xl border border-white/10">
                             {status === "replay" && (
                                 <div className="flex flex-col gap-1">
@@ -453,7 +486,10 @@ const SyncedVideoPlayer = React.forwardRef<any, SyncedVideoPlayerProps>(
                 {isDrive && status !== "countdown" && status !== "ended" && (
                     <>
                         {/* Status Badge */}
-                        <div className="absolute top-4 right-4 z-30 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className={cn(
+                            "absolute top-4 right-4 z-30 transition-opacity duration-300",
+                            showControls ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                        )}>
                             <div className="flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10">
                                 <div className={`w-2 h-2 rounded-full ${status === 'playing' ? 'bg-red-500 animate-pulse' : 'bg-blue-500'}`} />
                                 <span className="text-[10px] text-white font-bold uppercase tracking-wider">
