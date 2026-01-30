@@ -518,10 +518,10 @@ export default function JoinSessionClient({ sessionId }: JoinSessionClientProps)
             </div>
 
             {/* Bottom Bar: Action Icons */}
-            <div className="flex h-16 shrink-0 items-center justify-between border-t bg-white px-8 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-10">
-                <div className="flex-1"></div>
+            <div className="flex min-h-[4rem] h-auto shrink-0 items-center justify-between border-t bg-white px-2 md:px-8 py-2 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-10 overflow-x-auto no-scrollbar">
+                <div className="hidden md:flex flex-1"></div>
 
-                <div className="flex items-center gap-2 md:gap-4">
+                <div className="flex w-full md:w-auto items-center justify-center gap-2 md:gap-4">
                     {/* Only show controls if LIVE (or scheduled) and not Ended locally */}
                     {(session.status !== 'ended' && session.status !== 'replay' && playerStatus !== 'ended' && playerStatus !== 'replay') && (
                         <>
@@ -587,18 +587,18 @@ export default function JoinSessionClient({ sessionId }: JoinSessionClientProps)
                                 )}
                             >
                                 <div className={cn(
-                                    "flex h-10 w-10 items-center justify-center rounded-xl transition-all relative",
+                                    "flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-xl transition-all relative",
                                     isChatOpen ? "bg-[#2D8CFF] text-white shadow-md" : "bg-gray-100 text-gray-600 group-hover:bg-white group-hover:shadow-md"
                                 )}>
-                                    <Users className="h-5 w-5" />
+                                    <Users className="h-4 w-4 md:h-5 md:w-5" />
                                     {unreadCount > 0 && !isChatOpen && (
-                                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm animate-bounce">
+                                        <span className="absolute -top-1 -right-1 flex h-3 w-3 md:h-4 md:w-4 items-center justify-center rounded-full bg-red-500 text-[8px] md:text-[10px] font-bold text-white shadow-sm animate-bounce">
                                             {unreadCount}
                                         </span>
                                     )}
                                 </div>
                                 <span className={cn(
-                                    "text-[10px] font-bold uppercase tracking-tighter",
+                                    "text-[9px] md:text-[10px] font-bold uppercase tracking-tighter whitespace-nowrap",
                                     isChatOpen ? "text-[#2D8CFF]" : "text-gray-400 group-hover:text-gray-600"
                                 )}>Chat</span>
                             </button>
@@ -607,13 +607,13 @@ export default function JoinSessionClient({ sessionId }: JoinSessionClientProps)
 
                     <Link
                         href={userRole === 'admin' ? `/admin/sessions/${sessionId}` : '/student'}
-                        className="ml-4 rounded-lg bg-red-500 px-5 py-2 text-xs font-bold text-white transition-all hover:bg-red-600 active:scale-95"
+                        className="ml-auto md:ml-4 rounded-lg bg-red-500 px-3 md:px-5 py-2 text-[10px] md:text-xs font-bold text-white transition-all hover:bg-red-600 active:scale-95 whitespace-nowrap"
                     >
                         {isGuestLogin ? 'Exit' : 'Leave'}
                     </Link>
                 </div>
 
-                <div className="flex flex-1 justify-end">
+                <div className="hidden md:flex flex-1 justify-end">
                     <button
                         onClick={async () => {
                             if (!document.fullscreenElement) {

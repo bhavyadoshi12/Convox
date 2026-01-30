@@ -289,7 +289,10 @@ const SyncedVideoPlayer = React.forwardRef<any, SyncedVideoPlayerProps>(
         return (
             <div
                 ref={containerRef}
-                className="relative aspect-video w-full overflow-hidden bg-black shadow-2xl group rounded-2xl border border-white/5"
+                className={cn(
+                    "relative w-full overflow-hidden bg-black shadow-2xl group rounded-2xl border border-white/5",
+                    (status === "countdown" || status === "ended") ? "aspect-[9/16] md:aspect-video h-full object-cover" : "aspect-video"
+                )}
             >
                 {/* BRANCHED RENDERING: Drive (Iframe) vs Supabase (Native) */}
                 {isDrive ? (

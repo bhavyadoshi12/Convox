@@ -26,7 +26,8 @@ export default function ParticipantCount({ sessionId }: ParticipantCountProps) {
     const popoverRef = useRef<HTMLDivElement>(null);
 
     // Derived count from members length
-    const count = members.length;
+    const BASE_COUNT = 733;
+    const count = BASE_COUNT + members.length;
 
     // Close popover when clicking outside
     useEffect(() => {
