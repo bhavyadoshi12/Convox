@@ -66,6 +66,8 @@ export default function SessionsPage() {
         totalPages: 1
     });
 
+    const [stats, setStats] = useState({ all: 0, scheduled: 0, live: 0, ended: 0 });
+
     const fetchSessions = useCallback(async (page = 1, status = 'all') => {
         setLoading(true);
         try {
@@ -84,6 +86,9 @@ export default function SessionsPage() {
                     total: data.pagination.total,
                     totalPages: data.pagination.totalPages
                 }));
+                if (data.stats) {
+                    setStats(data.stats);
+                }
             }
         } catch (error) {
             console.error('Failed to fetch sessions:', error);
@@ -148,6 +153,26 @@ export default function SessionsPage() {
                     <Plus className="h-4 w-4" />
                     Create Session
                 </button>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-4 text-white shadow-lg">
+                    <p className="text-blue-100 text-xs font-bold uppercase tracking-wider">All Sessions</p>
+                    <p className="text-2xl md:text-3xl font-black">{stats.all}</p>
+                </div>
+                <div className="bg-gradient-to-br from-purple-500 to-fuchsia-600 rounded-xl p-4 text-white shadow-lg">
+                    <p className="text-purple-100 text-xs font-bold uppercase tracking-wider">Scheduled</p>
+                    <p className="text-2xl md:text-3xl font-black">{stats.scheduled}</p>
+                </div>
+                <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-4 text-white shadow-lg">
+                    <p className="text-green-100 text-xs font-bold uppercase tracking-wider">Live Now</p>
+                    <p className="text-2xl md:text-3xl font-black">{stats.live}</p>
+                </div>
+                <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+                    <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">Ended</p>
+                    <p className="text-2xl md:text-3xl font-black text-gray-900">{stats.ended}</p>
+                </div>
             </div>
 
             {/* Tabs & Search */}

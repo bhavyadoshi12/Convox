@@ -85,6 +85,7 @@ const handler = async (req: NextRequest, user: UserPayload) => {
                     total: count || 0,
                     totalPages: Math.ceil((count || 0) / limit),
                 },
+                stats: await getSessionStats()
             },
             { status: 200 }
         );
@@ -96,5 +97,13 @@ const handler = async (req: NextRequest, user: UserPayload) => {
         );
     }
 };
+
+async function getSessionStats() {
+    const { count: all } = await supabase.from('sessions').select('*', { count: 'exact', head: true });
+    const { count: scheduled } = await supabase.from('sessions').select('*', { count: 'exact', head: true }).eq('status', 'scheduled');
+    const { count: live } = await supabase.from('sessions').select('*', { count: 'exact', head: true }).eq('status', 'live');
+    const { count: ended } = await supabase.from('sessions').select('*', { count: 'exact', head: true }).eq('status', 'ended');
+    return { all: all || 0, scheduled: scheduled || 0, live: live || 0, ended: ended || 0 };
+}
 
 export const GET = requireAuth(handler, ['admin']);
