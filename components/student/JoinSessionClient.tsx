@@ -508,9 +508,9 @@ export default function JoinSessionClient({ sessionId }: JoinSessionClientProps)
                             />
                             <button
                                 onClick={() => setIsChatOpen(false)}
-                                className="absolute top-2 right-2 p-1 bg-gray-200 rounded-full hover:bg-gray-300 z-20 lg:hidden"
+                                className="absolute top-2 right-2 p-2 bg-white rounded-full hover:bg-gray-100 z-30 lg:hidden shadow-md border border-gray-100"
                             >
-                                <ChevronLeft className="h-4 w-4" />
+                                <ChevronLeft className="h-5 w-5 text-black stroke-[3]" />
                             </button>
                         </div>
                     </div>
@@ -587,18 +587,18 @@ export default function JoinSessionClient({ sessionId }: JoinSessionClientProps)
                                 )}
                             >
                                 <div className={cn(
-                                    "flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-xl transition-all relative",
+                                    "flex h-10 w-10 items-center justify-center rounded-xl transition-all relative", // Standardized size for mobile/desktop
                                     isChatOpen ? "bg-[#2D8CFF] text-white shadow-md" : "bg-gray-100 text-gray-600 group-hover:bg-white group-hover:shadow-md"
                                 )}>
-                                    <Users className="h-4 w-4 md:h-5 md:w-5" />
+                                    <Users className="h-5 w-5" />
                                     {unreadCount > 0 && !isChatOpen && (
-                                        <span className="absolute -top-1 -right-1 flex h-3 w-3 md:h-4 md:w-4 items-center justify-center rounded-full bg-red-500 text-[8px] md:text-[10px] font-bold text-white shadow-sm animate-bounce">
+                                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm animate-bounce">
                                             {unreadCount}
                                         </span>
                                     )}
                                 </div>
                                 <span className={cn(
-                                    "text-[9px] md:text-[10px] font-bold uppercase tracking-tighter whitespace-nowrap",
+                                    "text-[10px] font-bold uppercase tracking-tighter whitespace-nowrap",
                                     isChatOpen ? "text-[#2D8CFF]" : "text-gray-400 group-hover:text-gray-600"
                                 )}>Chat</span>
                             </button>
@@ -607,13 +607,17 @@ export default function JoinSessionClient({ sessionId }: JoinSessionClientProps)
 
                     <Link
                         href={userRole === 'admin' ? `/admin/sessions/${sessionId}` : '/student'}
-                        className="ml-auto md:ml-4 rounded-lg bg-red-500 px-3 md:px-5 py-2 text-[10px] md:text-xs font-bold text-white transition-all hover:bg-red-600 active:scale-95 whitespace-nowrap"
+                        className="ml-2 md:ml-4 flex flex-col items-center justify-center gap-1 w-14 rounded-xl p-1 text-[10px] font-bold text-red-500 hover:bg-red-50 transition-all active:scale-95 whitespace-nowrap"
+                        title={isGuestLogin ? 'Exit Session' : 'Leave Session'}
                     >
-                        {isGuestLogin ? 'Exit' : 'Leave'}
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 border border-red-100">
+                            <LogOut className="h-5 w-5 text-red-500" />
+                        </div>
+                        <span className="uppercase tracking-tighter">{isGuestLogin ? 'Exit' : 'Leave'}</span>
                     </Link>
                 </div>
 
-                <div className="hidden md:flex flex-1 justify-end">
+                <div className="flex flex-1 justify-end md:justify-end pl-2">
                     <button
                         onClick={async () => {
                             if (!document.fullscreenElement) {
@@ -624,7 +628,7 @@ export default function JoinSessionClient({ sessionId }: JoinSessionClientProps)
                         }}
                         className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 transition-colors"
                     >
-                        {!!document.fullscreenElement ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
+                        {!!document.fullscreenElement ? <Minimize2 className="h-6 w-6 text-gray-600" /> : <Maximize2 className="h-6 w-6 text-gray-600" />}
                     </button>
                 </div>
             </div>
