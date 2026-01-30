@@ -35,6 +35,7 @@ interface SessionData {
         id: string;
         title: string;
         thumbnail_url: string;
+        duration?: number;
     };
     createdBy: {
         id: string;
@@ -99,7 +100,33 @@ export default function SessionsPage() {
 
     useEffect(() => {
         fetchSessions(1, activeTab);
-    }, [activeTab, fetchSessions]);
+
+        // Auto-refresh check
+        const interval = setInterval(() => {
+            setSessions(currentSessions => {
+                const now = Date.now();
+                const needsUpdate = currentSessions.some(session => {
+                    const start = new Date(session.scheduled_start).getTime();
+                    const duration = (session.video_id?.duration || 0) * 1000; // Assuming duration is in seconds? API returns seconds usually.
+                    // Wait, session.video_id is populated object here.
+                    const end = start + ((session.video_id as any)?.duration || 0) * 1000;
+
+                    // Check if we just crossed into LIVE
+                    if (session.status === 'scheduled' && now >= start) return true;
+                    // Check if we just crossed into ENDED
+                    if (session.status === 'live' && now >= end) return true;
+                    return false;
+                });
+
+                if (needsUpdate) {
+                    fetchSessions(pagination.page, activeTab);
+                }
+                return currentSessions;
+            });
+        }, 5000); // Check every 5 seconds
+
+        return () => clearInterval(interval);
+    }, [activeTab, fetchSessions, pagination.page]);
 
     const deleteSession = useCallback(async (id: string, status: string) => {
         // Allow deleting any session regardless of status
