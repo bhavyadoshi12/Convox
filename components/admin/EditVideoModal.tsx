@@ -24,12 +24,14 @@ export default function EditVideoModal({ isOpen, onClose, onSuccess, video }: Ed
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isSuccess, setIsSuccess] = useState(false);
+    const [thumbnail, setThumbnail] = useState<File | null>(null);
 
     useEffect(() => {
         if (isOpen && video) {
             setTitle(video.title);
             setDescription(video.description || '');
             setDuration(video.duration || 0);
+            setThumbnail(null);
             setError(null);
             setIsSuccess(false);
         }
@@ -43,6 +45,32 @@ export default function EditVideoModal({ isOpen, onClose, onSuccess, video }: Ed
         setError(null);
 
         try {
+            let thumbnailPath = '';
+
+            // Upload thumbnail if selected
+            if (thumbnail) {
+                const token = localStorage.getItem('token');
+                // 1. Get Signed URL
+                const thumbResponse = await fetch('/api/admin/videos/get-upload-url', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ filename: thumbnail.name, fileType: thumbnail.type })
+                });
+                const thumbData = await thumbResponse.json();
+
+                if (!thumbData.success) throw new Error('Failed to get upload URL for thumbnail');
+
+                // 2. Upload to Storage
+                await fetch(thumbData.signedUrl, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': thumbnail.type },
+                    body: thumbnail
+                });
+
+                thumbnailPath = thumbData.fullPath;
+            }
+
+            // 3. Update Video Record
             const response = await fetch(`/api/admin/videos/${video.id}`, {
                 method: 'PUT',
                 headers: {
@@ -52,7 +80,8 @@ export default function EditVideoModal({ isOpen, onClose, onSuccess, video }: Ed
                 body: JSON.stringify({
                     title,
                     description,
-                    duration
+                    duration,
+                    thumbnailPath // Send path if we uploaded a new one
                 })
             });
 
@@ -66,9 +95,9 @@ export default function EditVideoModal({ isOpen, onClose, onSuccess, video }: Ed
             } else {
                 setError(data.message || 'Failed to update video');
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error('Update video error:', err);
-            setError('An error occurred while updating the video.');
+            setError(err.message || 'An error occurred while updating the video.');
         } finally {
             setSubmitting(false);
         }
@@ -127,9 +156,33 @@ export default function EditVideoModal({ isOpen, onClose, onSuccess, video }: Ed
                                         id="edit-desc"
                                         rows={3}
                                         className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-900 focus:border-[#2D8CFF] focus:outline-none focus:ring-1 focus:ring-[#2D8CFF] appearance-none"
-                                        value={description}
-                                        onChange={(e) => setDescription(e.target.value)}
                                     />
+                                </div>
+
+                                {/* Thumbnail Input */}
+                                <div>
+                                    <label className="mb-1.5 block text-sm font-semibold text-gray-700">Update Thumbnail (Optional)</label>
+                                    <div className="flex items-center gap-4 rounded-xl border border-gray-200 p-3 bg-gray-50/50">
+                                        <div className="bg-white p-2 rounded-lg border border-gray-100 shadow-sm">
+                                            {thumbnail ? (
+                                                <div className="text-xs text-green-600 font-medium flex items-center gap-1">
+                                                    <CheckCircle2 className="h-3 w-3" />
+                                                    Selected
+                                                </div>
+                                            ) : (
+                                                <div className="text-xs text-gray-400">Current</div>
+                                            )}
+                                        </div>
+                                        <input
+                                            type="file"
+                                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[#2D8CFF]/10 file:text-[#2D8CFF] hover:file:bg-[#2D8CFF]/20"
+                                            accept="image/jpeg,image/png,image/webp"
+                                            onChange={(e) => {
+                                                if (e.target.files?.[0]) setThumbnail(e.target.files[0]);
+                                            }}
+                                        />
+                                    </div>
+                                    <p className="mt-1 text-[10px] text-gray-400 pl-1">Leaves empty to keep existing thumbnail.</p>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4 rounded-xl bg-gray-50 p-4 border border-gray-100">

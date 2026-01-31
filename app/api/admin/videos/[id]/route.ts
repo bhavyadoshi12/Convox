@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { requireAuth } from '@/lib/middleware/authMiddleware';
 import { UserPayload } from '@/lib/auth';
 
@@ -37,12 +37,17 @@ const putHandler = async (req: NextRequest, user: UserPayload, context: RouteCon
     try {
         const { id } = await context.params;
         const body = await req.json();
-        const { title, description, duration } = body;
+        const { title, description, duration, thumbnailPath } = body;
 
         const updates: any = {};
         if (title) updates.title = title;
         if (description !== undefined) updates.description = description;
         if (duration !== undefined) updates.duration = Math.round(parseFloat(duration) || 0);
+
+        if (thumbnailPath) {
+            const { data: thumbPublicData } = supabaseAdmin.storage.from('videos').getPublicUrl(thumbnailPath);
+            updates.thumbnail_url = thumbPublicData.publicUrl;
+        }
 
         const { data: video, error } = await supabase
             .from('videos')

@@ -246,7 +246,7 @@ export default function JoinSessionClient({ sessionId }: JoinSessionClientProps)
                 hour: '2-digit', minute: '2-digit'
             }) : '';
 
-            const message = `🚀 Join Live Session on ZoomStream Sync\n\nTopic: ${session?.title}\nWhen: ${formattedDate} at ${formattedTime}\n\nJoin Here:\n${link}\n\nSee you there!`;
+            const message = `🚀 Join Live Session on Convox\n\nTopic: ${session?.title}\nWhen: ${formattedDate} at ${formattedTime}\n\nJoin Here:\n${link}\n\nSee you there!`;
 
             await navigator.clipboard.writeText(message);
             setIsCopied(true);

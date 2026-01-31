@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ZoomStream",
-  description: "ZoomStream Sync - Authentic Live Class Experience",
+  title: "Convox",
+  description: "Convox - Authentic Live Class Experience",
 };
 
 import { ToastProvider } from "@/context/ToastContext";

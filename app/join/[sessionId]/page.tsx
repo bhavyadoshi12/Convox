@@ -40,7 +40,7 @@ export async function generateMetadata(
 
     if (!session) {
         return {
-            title: 'Session Not Found | ZoomStream Sync',
+            title: 'Session Not Found | Convox',
             description: 'The live session you are looking for does not exist or has ended.',
         };
     }
@@ -50,13 +50,13 @@ export async function generateMetadata(
     const sessionThumbnail = session.video_id?.thumbnail_url || session.thumbnail_url || defaultThumbnail;
 
     return {
-        title: `Join Live: ${session.title} | ZoomStream Sync`,
+        title: `Join Live: ${session.title} | Convox`,
         description: `Join this live interactive session scheduled for ${new Date(session.scheduled_start).toLocaleString()}. Click to watch and chat!`,
         openGraph: {
             title: `🔴 LIVE: ${session.title}`,
-            description: `Join the conversation on ZoomStream Sync. Starting: ${new Date(session.scheduled_start).toLocaleTimeString()}`,
+            description: `Join the conversation on Convox. Starting: ${new Date(session.scheduled_start).toLocaleTimeString()}`,
             url: `https://zoom-stream-sync.vercel.app/join/${sessionId}`, // Replace with env var in prod
-            siteName: 'ZoomStream Sync',
+            siteName: 'Convox',
             images: [
                 {
                     url: sessionThumbnail,

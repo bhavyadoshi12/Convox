@@ -58,16 +58,31 @@ const VideoCard = ({ video, onDelete, onEdit, onPlay, formatDuration }: VideoCar
                         />
                     )
                 ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gray-50">
-                        {video.source === 'google_drive' ? (
-                            <div className="flex flex-col items-center gap-1">
-                                <div className="rounded-lg bg-green-50 p-2">
-                                    <Video className="h-6 w-6 text-green-600" />
+                    <div className="relative h-full w-full bg-gray-900">
+                        {/* Fallback to Video Tag (Auto-Preview) */}
+                        <video
+                            src={video.video_url}
+                            className="h-full w-full object-cover opacity-90"
+                            muted
+                            loop
+                            playsInline
+                            preload="metadata"
+                            onMouseOver={(e) => e.currentTarget.play()}
+                            onMouseOut={(e) => {
+                                e.currentTarget.pause();
+                                e.currentTarget.currentTime = 0;
+                            }}
+                        />
+                        {/* Type Badge if Drive */}
+                        {video.source === 'google_drive' && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 pointer-events-none">
+                                <div className="flex flex-col items-center gap-1">
+                                    <div className="rounded-lg bg-green-500/20 p-2 backdrop-blur-sm">
+                                        <Video className="h-6 w-6 text-green-400" />
+                                    </div>
+                                    <span className="text-[10px] font-medium text-green-100 shadow-sm">Drive Video</span>
                                 </div>
-                                <span className="text-[10px] font-medium text-green-700">Drive Video</span>
                             </div>
-                        ) : (
-                            <Video className="h-8 w-8 text-gray-300" />
                         )}
                     </div>
                 )}

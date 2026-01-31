@@ -159,7 +159,7 @@ export default function StudentDashboard() {
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-xl animate-pulse text-blue-600 font-bold">Loading Your Dashboard...</div>
+                <div className="text-xl animate-pulse text-primary font-bold">Loading Your Dashboard...</div>
             </div>
         );
     }
@@ -186,8 +186,8 @@ export default function StudentDashboard() {
 
                 {/* Stats Section */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                    <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-4 text-white shadow-lg">
-                        <p className="text-blue-100 text-xs font-bold uppercase tracking-wider">All Sessions</p>
+                    <div className="bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl p-4 text-white shadow-lg">
+                        <p className="text-violet-100 text-xs font-bold uppercase tracking-wider">All Sessions</p>
                         <p className="text-3xl font-black">{counts.all}</p>
                     </div>
                     <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-4 text-white shadow-lg">
@@ -219,7 +219,7 @@ export default function StudentDashboard() {
                     </button>
                     <button
                         onClick={() => setFilter('scheduled')}
-                        className={`px-4 py-2 rounded-lg font-medium transition-all ${filter === 'scheduled' ? 'bg-blue-500 text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100'
+                        className={`px-4 py-2 rounded-lg font-medium transition-all ${filter === 'scheduled' ? 'bg-primary text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100'
                             }`}
                     >
                         Upcoming
@@ -304,7 +304,7 @@ function SessionCard({ session, virtualStatus }: { session: Session; virtualStat
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'live': return 'bg-green-500';
-            case 'scheduled': return 'bg-blue-500';
+            case 'scheduled': return 'bg-primary';
             case 'ended': return 'bg-gray-500';
             default: return 'bg-gray-400';
         }
@@ -357,7 +357,7 @@ function SessionCard({ session, virtualStatus }: { session: Session; virtualStat
 
             {/* Content */}
             <div className="p-4">
-                <h3 className="text-lg font-bold text-gray-900 mb-2 truncate group-hover:text-[#2D8CFF] transition-colors">
+                <h3 className="text-lg font-bold text-gray-900 mb-2 truncate group-hover:text-primary transition-colors">
                     {session.title}
                 </h3>
                 <p className="text-sm text-gray-600 mb-1 flex items-center gap-2">

@@ -100,15 +100,15 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-[#F7F9FA] px-4 py-12">
+        <div className="min-h-screen flex items-center justify-center bg-[#FAF5FF] px-4 py-12">
             <div className="max-w-[450px] w-full bg-white rounded-2xl shadow-xl p-8 border border-zinc-100">
                 {/* Logo and Header */}
                 <div className="flex flex-col items-center mb-8">
-                    <div className="w-12 h-12 bg-[#2D8CFF] rounded-xl flex items-center justify-center mb-4 shadow-lg shadow-blue-100">
+                    <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center mb-4 shadow-lg shadow-violet-100">
                         <Video className="text-white w-7 h-7" />
                     </div>
                     <h1 className="text-2xl font-bold text-[#1F2937]">Create your account</h1>
-                    <p className="text-zinc-500 mt-1">Join the ZoomStream community</p>
+                    <p className="text-zinc-500 mt-1">Join the Convox community</p>
                 </div>
 
                 {/* Register Form */}
@@ -119,7 +119,7 @@ export default function RegisterPage() {
                             Full Name
                         </label>
                         <div className="relative group">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400 group-focus-within:text-[#2D8CFF] transition-colors">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400 group-focus-within:text-primary transition-colors">
                                 <User className="h-4 w-4" />
                             </div>
                             <input
@@ -128,7 +128,7 @@ export default function RegisterPage() {
                                 value={formData.name}
                                 onChange={handleChange}
                                 placeholder="John Doe"
-                                className="block w-full pl-10 pr-3 py-2.5 bg-zinc-50 border border-zinc-200 rounded-lg text-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#2D8CFF]/20 focus:border-[#2D8CFF] transition-all"
+                                className="block w-full pl-10 pr-3 py-2.5 bg-zinc-50 border border-zinc-200 rounded-lg text-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                                 required
                             />
                         </div>
@@ -140,7 +140,7 @@ export default function RegisterPage() {
                             Email Address
                         </label>
                         <div className="relative group">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400 group-focus-within:text-[#2D8CFF] transition-colors">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400 group-focus-within:text-primary transition-colors">
                                 <Mail className="h-4 w-4" />
                             </div>
                             <input
@@ -204,7 +204,7 @@ export default function RegisterPage() {
                         <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="text-xs font-semibold text-[#2D8CFF] flex items-center gap-1 hover:underline"
+                            className="text-xs font-semibold text-primary flex items-center gap-1 hover:underline"
                         >
                             {showPassword ? (
                                 <><EyeOff className="h-3 w-3" /> Hide Password</>
@@ -218,7 +218,7 @@ export default function RegisterPage() {
                     <div className="pt-2">
                         <Button
                             variant="primary"
-                            className="w-full py-2.5 bg-[#2D8CFF] hover:bg-[#1a73e8] border-none shadow-md shadow-blue-100"
+                            className="w-full py-2.5 bg-primary hover:bg-primary-hover border-none shadow-md shadow-violet-100"
                             loading={isLoading}
                             type="submit"
                         >
@@ -230,7 +230,7 @@ export default function RegisterPage() {
                 {/* Footer Link */}
                 <div className="mt-8 text-center text-sm text-zinc-600">
                     Already have an account?{' '}
-                    <Link href="/login" className="font-semibold text-[#2D8CFF] hover:underline">
+                    <Link href="/login" className="font-semibold text-primary hover:underline">
                         Sign in
                     </Link>
                 </div>

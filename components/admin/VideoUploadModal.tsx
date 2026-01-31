@@ -409,22 +409,71 @@ export default function VideoUploadModal({ isOpen, onClose, onSuccess }: VideoUp
 
                             {/* File Display - Only show in Supabase mode if file exists */}
                             {mode === 'supabase' && file && (
-                                <div className="flex items-center gap-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
-                                    <div className="rounded-lg bg-[#2D8CFF]/10 p-3">
-                                        <FileVideo className="h-8 w-8 text-[#2D8CFF]" />
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                                        <div className="rounded-lg bg-[#2D8CFF]/10 p-3">
+                                            <FileVideo className="h-8 w-8 text-[#2D8CFF]" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="truncate font-semibold text-gray-900">{file.name}</p>
+                                            <p className="text-xs text-gray-500">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setFile(null)}
+                                            className="text-gray-400 hover:text-red-500"
+                                            disabled={uploading}
+                                        >
+                                            <X className="h-5 w-5" />
+                                        </button>
                                     </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="truncate font-semibold text-gray-900">{file.name}</p>
-                                        <p className="text-xs text-gray-500">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
+
+                                    {/* Custom Thumbnail Input */}
+                                    <div className="rounded-xl border border-gray-200 p-4">
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">Thumbnail (Auto-generated or Upload custom)</label>
+                                        <div className="flex items-center gap-4">
+                                            {thumbnail ? (
+                                                <div className="relative group h-20 w-36 overflow-hidden rounded-lg border border-gray-200">
+                                                    <img
+                                                        src={URL.createObjectURL(thumbnail)}
+                                                        alt="Thumbnail preview"
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setThumbnail(null)}
+                                                        className="absolute top-1 right-1 rounded-full bg-white/90 p-1 text-gray-600 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >
+                                                        <X className="h-3 w-3" />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className="h-20 w-36 rounded-lg bg-gray-100 flex items-center justify-center text-xs text-gray-400">
+                                                    No Thumbnail
+                                                </div>
+                                            )}
+
+                                            <div className="flex-1">
+                                                <input
+                                                    type="file"
+                                                    id="thumbnail-upload"
+                                                    className="hidden"
+                                                    accept="image/jpeg,image/png,image/webp"
+                                                    onChange={(e) => {
+                                                        if (e.target.files?.[0]) setThumbnail(e.target.files[0]);
+                                                    }}
+                                                />
+                                                <label
+                                                    htmlFor="thumbnail-upload"
+                                                    className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                                                >
+                                                    <Upload className="h-4 w-4" />
+                                                    Upload Image
+                                                </label>
+                                                <p className="mt-1 text-[10px] text-gray-500">JPG, PNG, WebP (Max 2MB)</p>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => setFile(null)}
-                                        className="text-gray-400 hover:text-red-500"
-                                        disabled={uploading}
-                                    >
-                                        <X className="h-5 w-5" />
-                                    </button>
                                 </div>
                             )}
 
