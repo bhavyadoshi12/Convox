@@ -1,11 +1,11 @@
 
 <p align="center">
-  <img src="./Banner.png" alt="ZoomStream Sync Banner" />
+  <img src="./Banner.png" alt="Convox Banner" />
 </p>
 
-# 🎥 ZoomStream Sync
+# 🎥 Convox (formerly ZoomStream Sync)
 
-**ZoomStream Sync** is a high-performance, real-time live learning platform that bridges the gap between pre‑recorded content and live interaction. It lets instructors schedule video-based sessions that stay perfectly **synchronized** for all participants, with automated timeline messages and **real-time chat**.
+**Convox** is a high-performance, real-time live learning platform that bridges the gap between pre‑recorded content and live interaction. It lets instructors schedule video-based sessions that stay perfectly **synchronized** for all participants, with automated timeline messages and **real-time chat**.
 
 ***
 
@@ -16,16 +16,18 @@
 *   **💬 Real-Time Chat**: Interactive chat with Instructor badges and automated system messages.
 *   **⏱️ Message Timeline**: Schedule messages to trigger at precise timestamps during playback.
 *   **📊 Admin Dashboard**: Manage videos, sessions, users, and platform stats.
-*   **📱 Responsive UI**: Optimized for Desktop, Tablet, and Mobile.
+*   **🖼️ Custom Thumbnails & Previews**: Upload custom thumbnails or rely on **automatic video previews** (no more blank cards!) for a seamless library experience.
+*   **📱 Responsive UI**: Optimized for Desktop, Tablet, and Mobile with a clean, **modern Violet theme**.
+*   **☁️ Google Drive Support**: Seamlessly integrate and stream videos hosted on Google Drive.
 
 ***
 
 ## 🛠️ Tech Stack
 
 *   **Frontend**: Next.js 14 (App Router), React, Tailwind CSS, Lucide React
-*   **Backend**: Next.js API Routes, Mongoose (MongoDB)
+*   **Backend**: Next.js API Routes, Supabase
 *   **Real-time**: Pusher Channels
-*   **Media**: **Supabase Storage + CDN** (secure private bucket + signed URLs for playback)
+*   **Media**: **Supabase Storage + CDN** (secure private bucket), **Google Drive API**
 *   **State Management**: React Hooks (useMemo, useCallback) & Context API
 *   **Authentication**: JWT with Role-Based Access Control
 
@@ -36,9 +38,8 @@
 Please ensure you have the following:
 
 *   **Node.js**: v18.x or later
-*   **MongoDB Atlas**: Database for users, sessions, and metadata
+*   **Supabase Database**: Database for users, sessions, and metadata
 *   **Supabase Project**: For **Storage** (private bucket) and signed URLs
-*   **Pusher Account**: For real-time events (chat, sync)
 
 ***
 
@@ -46,8 +47,8 @@ Please ensure you have the following:
 
 1.  **Clone the Repository**
     ```bash
-    git clone https://github.com/your-username/ZoomStream_Sync.git
-    cd ZoomStream_Sync
+    git clone https://github.com/bhavyadoshi12/Convox.git
+    cd Convox
     ```
 
 2.  **Install Dependencies**
@@ -57,13 +58,11 @@ Please ensure you have the following:
 
 3.  **Environment Variables**
     Create a `.env` (copy from `.env.example`) and provide credentials for:
-    *   **Supabase**: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_STORAGE_BUCKET`
-
-    *   **MongoDB**: `MONGODB_URI`
+    *   **Supabase**: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (Storage & Auth)
 
     *   **JWT/Auth**: `JWT_SECRET`
 
-    *   **Pusher**: `PUSHER_APP_ID`, `PUSHER_KEY`, `PUSHER_SECRET`, `PUSHER_CLUSTER`
+    *   **Pusher**: `PUSHER_APP_ID`, `PUSHER_SECRET`, `NEXT_PUBLIC_PUSHER_KEY`, `NEXT_PUBLIC_PUSHER_CLUSTER`
     > **Notes**
     >
     > *   Keep your bucket **private** (Public OFF) and use **signed URLs** for playback.
@@ -79,7 +78,7 @@ Please ensure you have the following:
 
 ## 📂 Project Structure
 
-    ZoomStream_Sync/
+    Convox/
     ├── app/                  # Next.js App Router (Admin & Student routes)
     │   ├── (admin)/          # Protected Admin Dashboard & Management
     │   ├── (student)/        # Student Join & Live Room
@@ -88,8 +87,7 @@ Please ensure you have the following:
     │   ├── admin/            # Admin-only components (Modals, Forms, Stats)
     │   ├── student/          # Student components (Player, Chat)
     │   └── ui/               # UI Kit (Buttons, Skeletons, Spinners)
-    ├── lib/                  # Utilities (Supabase, Pusher, MongoDB, Auth)
-    ├── models/               # Mongoose Schemas
+    ├── lib/                  # Utilities (Supabase, Pusher, Auth)
     ├── public/               # Static Assets
     └── next.config.js        # Next.js Configuration
 
@@ -107,6 +105,7 @@ Please ensure you have the following:
 *   `GET /api/admin/stats` — Dashboard metrics
 *   `GET /api/admin/videos` — List uploaded videos (metadata from DB)
 *   `POST /api/admin/videos/upload` — **Upload to Supabase Storage** (private bucket)
+*   `PUT /api/admin/videos/:id` — Update video metadata and **thumbnail**.
 *   `GET /api/admin/sessions` — List & filter sessions
 
 ### Real-time & Sync
@@ -165,7 +164,7 @@ For step-by-step deployment, see **DEPLOYMENT.md**.
 *   **Video won’t start**: Ensure signed URL is valid (not expired) and the file path is correct.
 *   **Autoplay blocked**: Browser policies may require muted autoplay; unmute with a user gesture.
 *   **Upload fails**: Check bucket name, file type (`video/*`), and that Service Role Key is used **server-side**.
-*   **MongoDB connection**: Whitelist your server IP / use correct connection string.
+*   **Database connection**: Ensure Supabase credentials are correct in `.env`.
 *   **Pusher not connecting**: Verify cluster and keys; check region compatibility.
 *   **Large uploads**: Prefer stable connections; consider chunked uploads as your library grows.
 
@@ -197,6 +196,6 @@ Distributed under the **MIT License**. See `LICENSE` for details.
 
 ***
 
-**Built with ❤️ by the ZoomStream Sync Team**
+**Built with ❤️ by Bhavya Doshi**
 
 > Using **Supabase Storage** for secure, signed playback—fast, reliable, and perfect for a free-first setup.
