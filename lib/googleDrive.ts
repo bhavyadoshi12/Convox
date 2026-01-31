@@ -1,5 +1,5 @@
 /**
- * Google Drive Utilities for ZoomStream Sync
+ * Google Drive Utilities for Convox
  */
 
 /**

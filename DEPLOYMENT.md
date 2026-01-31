@@ -1,6 +1,6 @@
-# 🚀 Deployment Guide: ZoomStream_Sync
+# 🚀 Deployment Guide: Convox
 
-This guide walks you through deploying your ZoomStream_Sync application to **Vercel**.
+This guide walks you through deploying your Convox application to **Vercel**.
 
 ---
 
@@ -24,11 +24,11 @@ This guide walks you through deploying your ZoomStream_Sync application to **Ver
     ```
 3.  Commit your changes:
     ```bash
-    git commit -m "Initial commit - ZoomStream_Sync"
+    git commit -m "Initial commit - Convox"
     ```
 4.  Create a new repository on GitHub and push your code:
     ```bash
-    git remote add origin https://github.com/your-username/your-repo-name.git
+    git remote add origin https://github.com/bhavyadoshi12/Convox.git
     git branch -M main
     git push -u origin main
     ```

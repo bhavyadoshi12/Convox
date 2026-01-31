@@ -131,7 +131,7 @@ const SessionCard = ({ session, onDelete, onEdit }: SessionCardProps) => {
                     onClick={() => {
                         const link = `${window.location.origin}/join/${session.sessionId || session.id}`;
                         // Simplified format for better compatibility and "tap to link" behavior
-                        const message = `🚀 Join Live Session on ZoomStream Sync\n\nTopic: ${session.title}\nWhen: ${formattedDate} at ${formattedTime}\n\nJoin Here:\n${link}\n\nSee you there!`;
+                        const message = `🚀 Join Live Session on Convox\n\nTopic: ${session.title}\nWhen: ${formattedDate} at ${formattedTime}\n\nJoin Here:\n${link}\n\nSee you there!`;
 
                         navigator.clipboard.writeText(message);
                         alert("Invitation copied to clipboard!");

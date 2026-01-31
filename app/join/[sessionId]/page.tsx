@@ -4,8 +4,8 @@ import JoinSessionClient from '@/components/student/JoinSessionClient';
 import { supabaseAdmin } from '@/lib/supabase';
 
 type Props = {
-    params: { sessionId: string };
-    searchParams: { [key: string]: string | string[] | undefined };
+    params: Promise<{ sessionId: string }>;
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
 // Fetch session data helper
@@ -35,7 +35,7 @@ export async function generateMetadata(
     { params, searchParams }: Props,
     parent: ResolvingMetadata
 ): Promise<Metadata> {
-    const sessionId = params.sessionId;
+    const { sessionId } = await params;
     const session = await getSession(sessionId);
 
     if (!session) {
@@ -46,7 +46,7 @@ export async function generateMetadata(
     }
 
     // Default thumbnails
-    const defaultThumbnail = 'https://zoom-stream-sync.vercel.app/og-image.jpg'; // Ideally replace with a real default
+    const defaultThumbnail = 'https://convox.vercel.app/og-image.jpg'; // Updated URL
     const sessionThumbnail = session.video_id?.thumbnail_url || session.thumbnail_url || defaultThumbnail;
 
     return {
@@ -55,7 +55,7 @@ export async function generateMetadata(
         openGraph: {
             title: `🔴 LIVE: ${session.title}`,
             description: `Join the conversation on Convox. Starting: ${new Date(session.scheduled_start).toLocaleTimeString()}`,
-            url: `https://zoom-stream-sync.vercel.app/join/${sessionId}`, // Replace with env var in prod
+            url: `https://convox.vercel.app/join/${sessionId}`,
             siteName: 'Convox',
             images: [
                 {
@@ -78,5 +78,6 @@ export async function generateMetadata(
 }
 
 export default async function JoinSessionPage({ params }: Props) {
-    return <JoinSessionClient sessionId={params.sessionId} />;
+    const { sessionId } = await params;
+    return <JoinSessionClient sessionId={sessionId} />;
 }

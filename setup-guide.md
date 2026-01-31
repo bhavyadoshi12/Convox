@@ -1,6 +1,6 @@
-# 🚀 Setup Guide: ZoomStream_Sync
+# 🚀 Setup Guide: Convox
 
-This guide will walk you through setting up the necessary cloud services for ZoomStream_Sync.
+This guide will walk you through setting up the necessary cloud services for Convox.
 
 ---
 

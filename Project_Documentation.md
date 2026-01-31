@@ -1,9 +1,9 @@
-# 🎥 ZoomStream Sync - Project Documentation
+# 🎥 Convox - Project Documentation
 
-Welcome to **ZoomStream Sync**! This project is a modern, real-time live learning platform designed to make online classes feel alive and interactive.
+Welcome to **Convox**! This project is a modern, real-time live learning platform designed to make online classes feel alive and interactive.
 
 ## 🚀 1. Topic & Description
-**ZoomStream Sync** is a platform where teachers can schedule video lessons that start automatically for all students at the same time. Think of it like a "watch party" for education!
+**Convox** is a platform where teachers can schedule video lessons that start automatically for all students at the same time. Think of it like a "watch party" for education!
 
 - **Why it was made**: Online learning can feel lonely. Pre-recorded videos are boring, and live streaming is hard to manage. This tool bridges that gap by letting teachers schedule pre-recorded videos to play "live" with real-time chat and automated teacher-messages.
 
@@ -63,7 +63,7 @@ For those who want to know the "under the hood" secrets:
 
 ## 🔗 Live Demo
 Check out the live version here:
-👉 **[ZoomStream Sync Live](https://zoom-stream-sync.vercel.app/login)**
+👉 **[Convox Live](https://convox.vercel.app/login)**
 
 ---
 *Created with ❤️ for students to build and learn.*
