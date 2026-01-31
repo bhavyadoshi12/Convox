@@ -17,7 +17,6 @@ export default function LoginPage() {
     const [formData, setFormData] = useState({
         email: '',
         password: '',
-        password: '',
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
