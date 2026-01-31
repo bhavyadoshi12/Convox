@@ -3,7 +3,7 @@
   <img src="./Banner.png" alt="Convox Banner" />
 </p>
 
-# 🎥 Convox (formerly ZoomStream Sync)
+# 🎥 Convox
 
 **Convox** is a high-performance, real-time live learning platform that bridges the gap between pre‑recorded content and live interaction. It lets instructors schedule video-based sessions that stay perfectly **synchronized** for all participants, with automated timeline messages and **real-time chat**.
 
